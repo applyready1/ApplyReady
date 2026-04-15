@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.local
+.env.production
+.next/
+out/
+.vercel/
+dist/
+*.log
+.DS_Store
+__pycache__/
+*.pyc
+extension/libs/
