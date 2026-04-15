@@ -90,7 +90,7 @@ export default function PrivacyPolicy() {
       <h2 style={{ fontSize: '1.25rem', marginTop: '28px', marginBottom: '8px' }}>9. Contact</h2>
       <p style={{ marginBottom: '32px' }}>
         If you have questions about this privacy policy, please contact us at: <br />
-        <strong>ApplyReady.ext@gmail.com</strong>
+        <strong>husainlabwork@gmail.com</strong>
       </p>
 
       <footer style={{ textAlign: 'center', color: '#9ca3af', fontSize: '12px', paddingTop: '24px', borderTop: '1px solid #f3f4f6' }}>
