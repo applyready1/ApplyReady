@@ -62,27 +62,32 @@ function buildResumePDF(resumeData, matchingKeywords = [], options = {}) {
   }
 
   /**
-   * Clean extracted text: remove PDF artifacts, normalize whitespace
+   * Deeply clean text: remove ALL garbage characters and artifacts
    */
-  function cleanText(text) {
-    return text
-      .replace(/[\%\|]/g, '') // Remove PDF extraction artifacts
-      .replace(/\s+/g, ' ')    // Normalize multiple spaces
+  function deepClean(text) {
+    if (!text) return '';
+    
+    // Remove any non-printable characters
+    let cleaned = text
+      .replace(/[^\w\s\.\,\-;:@'"\(\)&\/]/g, '')  // Keep only word chars, space, punctuation
+      .replace(/\s+/g, ' ')                         // Collapse whitespace
       .trim();
+    
+    return cleaned;
   }
 
   /**
    * Write a simple line of text (no formatting)
    */
   function writeLine(text, size = fontSize, isBold = false) {
+    const cleaned = deepClean(text);
+    if (!cleaned) return;
+
     doc.setFont(fontFamily, isBold ? 'bold' : 'normal');
     doc.setFontSize(size);
     doc.setTextColor(0, 0, 0);
 
-    const cleanedText = cleanText(text);
-    if (!cleanedText) return;
-
-    const lines = doc.splitTextToSize(cleanedText, maxWidth);
+    const lines = doc.splitTextToSize(cleaned, maxWidth);
     const lineHeight = size * 0.35;
 
     for (const line of lines) {
@@ -90,36 +95,6 @@ function buildResumePDF(resumeData, matchingKeywords = [], options = {}) {
       doc.text(line, marginLeft, y);
       y += lineHeight;
     }
-  }
-
-  /**
-   * Parse and render section content cleanly
-   * Split by sentences for all section types
-   */
-  function formatSectionContent(sectionType, rawContent) {
-    // Aggressive cleaning: remove all PDF artifacts
-    let cleaned = rawContent
-      .replace(/[\%\|\*\^\~\`]/g, '')  // Remove PDF extraction artifacts
-      .replace(/[•\-]+\s*/g, '')        // Remove existing bullets
-      .replace(/\s+/g, ' ')             // Collapse multiple spaces/newlines
-      .replace(/—/g, '-')               // Normalize dashes
-      .trim();
-
-    if (!cleaned || cleaned.length < 5) return [];
-
-    // Split into logical chunks by sentences
-    const sentences = cleaned
-      .split(/(?<=[a-z])\.\s+(?=[A-Z])|(?<=[a-z])\s+(?=[A-Z][a-z]+\s*[,—-])/g)
-      .map(s => s.trim())
-      .filter(s => s.length > 5);
-
-    // If no sentences found, split by any capitalized section
-    if (sentences.length === 0) {
-      const parts = cleaned.split(/\s+(?=[A-Z])/);
-      return parts.map(p => [p.trim()]).filter(p => p[0].length > 5);
-    }
-
-    return sentences.map(s => [s]);
   }
 
   // ── CONTACT INFORMATION ──────────────────────────────────
@@ -157,17 +132,33 @@ function buildResumePDF(resumeData, matchingKeywords = [], options = {}) {
     writeLine(section.title.toUpperCase(), headerSize, true);
     y += 1;
 
-    // Parse and format section content
-    const contentEntries = formatSectionContent(section.type, section.content);
+    // Clean the raw content and split by logical breaks
+    const rawContent = section.content || '';
+    const cleaned = deepClean(rawContent);
 
-    for (const entry of contentEntries) {
-      if (entry.length === 0) continue;
+    if (!cleaned) continue;
 
-      // Each entry is a single-item array [text]
-      // Format as a bullet point
-      const bulletText = '• ' + entry[0];
-      writeLine(bulletText, fontSize, false);
-      y += 0.5;
+    // Split by:
+    // 1. Existing bullet points/dashes at start of line
+    // 2. Capitalized words that look like new entries (for experience sections)
+    // 3. Periods followed by capitals
+    
+    const contentLines = cleaned
+      .split(/(?=[•\-\*]|(?<=[a-z]|\))\.\s+[A-Z])/g)
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
+    for (const line of contentLines) {
+      if (!line) continue;
+
+      // Format as bullet if not already
+      const hasBullet = /^[•\-\*]/.test(line);
+      const displayText = hasBullet 
+        ? line 
+        : '• ' + line;
+
+      writeLine(displayText, fontSize, false);
+      y += 0.6;
     }
 
     y += 2; // Gap between sections
