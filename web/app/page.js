@@ -25,11 +25,14 @@ export default function LandingPage() {
         <h2 style={{ marginBottom: '16px' }}>How It Works</h2>
         <ol style={{ lineHeight: '2', paddingLeft: '20px' }}>
           <li>Upload your resume PDF (stays in your browser — we never see it)</li>
-          <li>Browse to any job listing on LinkedIn, Indeed, Glassdoor, etc.</li>
+          <li>Browse to any job listing on any site — ApplyReady intelligently detects job descriptions</li>
           <li>See your ATS match score and missing keywords instantly</li>
           <li>Edit your sections with keyword guidance</li>
           <li>Download a tailored, ATS-optimized resume PDF</li>
         </ol>
+        <p style={{ marginTop: '12px', fontSize: '13px', color: '#059669' }}>
+          💡 Works on LinkedIn, Indeed, Glassdoor, Lever, Greenhouse, and 100+ other job boards. Not detecting? Try our manual scraping feature.
+        </p>
       </section>
 
       {/* Features */}
@@ -45,8 +48,16 @@ export default function LandingPage() {
             <p style={{ color: '#6b7280', fontSize: '14px' }}>ATS keyword score in under 1 second. Free, unlimited scans.</p>
           </div>
           <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
+            <strong>🌐 Universal Detection</strong>
+            <p style={{ color: '#6b7280', fontSize: '14px' }}>Works on 100+ job boards. Intelligently detects job listings by URL keywords.</p>
+          </div>
+          <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
             <strong>📋 Smart Reordering</strong>
             <p style={{ color: '#6b7280', fontSize: '14px' }}>Sections auto-sorted by relevance. Most important skills first.</p>
+          </div>
+          <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
+            <strong>🔧 Manual Scraping</strong>
+            <p style={{ color: '#6b7280', fontSize: '14px' }}>Fallback option to manually extract job descriptions if auto-detection fails.</p>
           </div>
           <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
             <strong>💰 {PRICE} Once, Yours Forever</strong>

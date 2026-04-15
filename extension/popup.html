@@ -68,30 +68,33 @@
   </div>
 
   <!-- ----------------------------------------------------------
-       VIEW 3: No job page detected
+       VIEW 3: Job Detection Status (manual scraping fallback)
        ---------------------------------------------------------- -->
   <div id="view-no-job" class="view hidden">
     <div class="header">
       <h1>📄 ApplyReady</h1>
-      <p class="subtitle">Navigate to a job listing to start matching</p>
+      <p class="subtitle" id="job-status-message">Checking page...</p>
     </div>
 
-    <div class="supported-sites">
-      <p>Supported job sites:</p>
-      <ul>
-        <li>LinkedIn Jobs</li>
-        <li>Indeed</li>
-        <li>Glassdoor</li>
-        <li>ZipRecruiter</li>
-        <li>Monster</li>
-        <li>Dice</li>
-        <li>Lever</li>
-        <li>Greenhouse</li>
-        <li>Workday</li>
-      </ul>
+    <div class="job-detection-info">
+      <div id="detected-info" class="info-box" style="display:none;">
+        <p style="color: #059669; font-weight: 600;">✓ Job Page Detected</p>
+        <p style="font-size: 13px; color: #6b7280; margin-top: 8px;">
+          We found what looks like a job listing. Click below to analyze and match your resume.
+        </p>
+        <button id="btn-analyze-manual" class="btn btn-primary" style="margin-top: 12px; width: 100%;">Analyze & Match</button>
+      </div>
+
+      <div id="not-detected-info" class="info-box" style="display:none;">
+        <p style="color: #dc2626; font-weight: 600;">✘ Job Page Not Detected</p>
+        <p style="font-size: 13px; color: #6b7280; margin-top: 8px;">
+          We couldn't automatically detect a job listing on this page. Try manually scraping, or navigate to any job listing (LinkedIn, Indeed, Glassdoor, etc.).
+        </p>
+        <button id="btn-manual-scrape" class="btn btn-secondary" style="margin-top: 12px; width: 100%;">Try Manual Scraping</button>
+      </div>
     </div>
 
-    <div class="actions">
+    <div class="actions" style="margin-top: 16px;">
       <button id="btn-edit-resume" class="btn btn-secondary">Edit Resume</button>
       <button id="btn-manage-license" class="btn btn-secondary">License Key</button>
     </div>

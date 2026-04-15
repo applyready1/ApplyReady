@@ -37,6 +37,18 @@ const CONFIG = {
   get PRICE() { return `$${this.PRICE_AMOUNT % 1 === 0 ? this.PRICE_AMOUNT : this.PRICE_AMOUNT.toFixed(2)}`; },
   VERSION: '1.0.0',
 
+  // ── URL Keyword Patterns ──────────────────────────────────
+  // Keywords in URL that indicate a job listing page
+  JOB_URL_KEYWORDS: [
+    'job', 'jobs', 'career', 'careers', 'position', 'positions',
+    'posting', 'postings', 'opening', 'openings', 'listing', 'listings',
+    'vacancy', 'vacancies', 'hire', 'hiring', 'recruit', 'opportunity',
+    'role', 'roles', 'apply', 'application', 'recruit', 'employment',
+    'vjk', // Indeed parameter
+    'jk',  // Indeed job key
+    'q-',  // Indeed search
+  ],
+
   // ── Job Site Selectors ────────────────────────────────────
   // CSS selectors to extract job descriptions from supported sites
   JOB_SITE_SELECTORS: {

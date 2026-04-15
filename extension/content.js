@@ -1,18 +1,26 @@
 ﻿/**
  * content.js — Job Description Scraper (Content Script)
  * 
- * Injected into supported job listing pages (LinkedIn, Indeed, Glassdoor, etc.).
- * Extracts the job title, company name, and full job description text from the
- * page DOM using site-specific CSS selectors defined in config.js.
+ * Intelligently detects job listing pages using:
+ * 1. URL keyword matching (flexible, works across regions)
+ * 2. Site-specific selectors (accurate, proven on major job boards)
+ * 3. Generic fallback (attempts to extract from any page)
  * 
- * Communicates with popup.js via chrome.runtime messaging.
- * 
- * Dependencies: config.js (JOB_SITE_SELECTORS — injected via manifest)
- * Injected on: Job listing pages matching manifest content_scripts patterns
+ * Supports both automatic detection and manual scraping.
  */
 
 (function () {
   'use strict';
+
+  /**
+   * Check if current URL contains job-related keywords
+   * @returns {boolean} - True if URL looks like a job listing
+   */
+  function isJobUrlKeyword() {
+    const url = window.location.href.toLowerCase();
+    const keywords = CONFIG.JOB_URL_KEYWORDS || [];
+    return keywords.some(keyword => url.includes(keyword));
+  }
 
   /**
    * Determines which job site we're on based on the hostname.
@@ -48,49 +56,130 @@
   }
 
   /**
-   * Scrapes the current page for job listing data.
-   * @returns {{ jobTitle: string, company: string, jobDescription: string, url: string, site: string } | null}
+   * Generic job scraping fallback - extracts from common HTML patterns
+   * @returns {object|null} - Job data or null if not found
    */
-  function scrapeJobListing() {
-    const site = detectJobSite();
-    if (!site) return null;
+  function scrapeJobListingGeneric() {
+    // Try to find job description from common patterns
+    const descriptionSelectors = [
+      'article', 'main', '[role="main"]', '.job-description', 
+      '.job-details', '.posting-description', '[data-testid*="description"]'
+    ];
+    
+    let jobDescription = '';
+    for (const selector of descriptionSelectors) {
+      const el = document.querySelector(selector);
+      if (el) {
+        jobDescription = el.textContent.trim();
+        if (jobDescription.length > 100) break;
+      }
+    }
 
-    const selectors = CONFIG.JOB_SITE_SELECTORS[site];
-    if (!selectors) return null;
+    // Try to find title from common tag patterns
+    const titleSelectors = ['h1', '[data-testid*="title"]', '.job-title'];
+    let jobTitle = '';
+    for (const selector of titleSelectors) {
+      const el = document.querySelector(selector);
+      if (el) {
+        jobTitle = el.textContent.trim();
+        if (jobTitle.length > 5) break;
+      }
+    }
 
-    const jobDescription = extractText(selectors.jobDescription);
-    if (!jobDescription || jobDescription.length < 50) return null;
+    // Try to find company
+    let company = '';
+    const companySelectors = [
+      '[data-testid*="company"]', '.company-name', '.employer', 
+      'meta[name="company"]', '[itemprop="hiringOrganization"]'
+    ];
+    for (const selector of companySelectors) {
+      const el = document.querySelector(selector);
+      if (el) {
+        company = el.getAttribute('content') || el.textContent.trim();
+        if (company.length > 2) break;
+      }
+    }
+
+    if (jobDescription.length < 50) return null;
 
     return {
-      jobTitle: extractText(selectors.jobTitle),
-      company: extractText(selectors.company),
+      jobTitle: jobTitle || 'Job Listing',
+      company: company || 'Company',
       jobDescription,
       url: window.location.href,
-      site
+      site: 'generic'
     };
   }
 
-  // -- Message Listener --------------------------------------
-  // Responds to messages from popup.js requesting job data
+  /**
+   * Scrapes the current page for job listing data using multiple strategies
+   * @returns {{ jobTitle: string, company: string, jobDescription: string, url: string, site: string } | null}
+   */
+  function scrapeJobListing() {
+    // Strategy 1: Try site-specific selectors
+    const site = detectJobSite();
+    if (site) {
+      const selectors = CONFIG.JOB_SITE_SELECTORS[site];
+      if (selectors) {
+        const jobDescription = extractText(selectors.jobDescription);
+        if (jobDescription && jobDescription.length >= 50) {
+          return {
+            jobTitle: extractText(selectors.jobTitle),
+            company: extractText(selectors.company),
+            jobDescription,
+            url: window.location.href,
+            site
+          };
+        }
+      }
+    }
+
+    // Strategy 2: If URL looks like a job page but site-specific didn't work, try generic
+    if (isJobUrlKeyword()) {
+      const genericData = scrapeJobListingGeneric();
+      if (genericData) return genericData;
+    }
+
+    return null;
+  }
+
+  /**
+   * Check if page appears to be a job listing based on keywords
+   * Called for initial detection
+   */
+  function isLikelyJobPage() {
+    return isJobUrlKeyword() || detectJobSite() !== null;
+  }
+
+  // -- Message Listener for Both Auto & Manual Scraping ------
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'scrapeJob') {
+      // Scrape using configured selectors
+      const data = scrapeJobListing();
+      sendResponse(data);
+    } else if (message.action === 'isJobPage') {
+      // Check if page looks like a job listing
+      sendResponse({ isJobPage: isLikelyJobPage() });
+    } else if (message.action === 'manualScrape') {
+      // Manual scrape attempt (user clicked button)
       const data = scrapeJobListing();
       sendResponse(data);
     }
-    return true; // Keep message channel open for async
+    return true;
   });
 
-  // -- Badge Notification ------------------------------------
-  // Notify background.js that we're on a job page so it can show a badge
+  // -- Badge Notification for Automatic Detection -----------
 
-  const jobData = scrapeJobListing();
-  if (jobData) {
+  if (isLikelyJobPage()) {
+    const jobData = scrapeJobListing();
     chrome.runtime.sendMessage({
       action: 'jobPageDetected',
-      hasJob: true,
-      jobTitle: jobData.jobTitle,
-      company: jobData.company
+      hasJob: !!jobData,
+      jobTitle: jobData?.jobTitle,
+      company: jobData?.company
+    }).catch(() => {
+      // Silently fail - service worker might not be ready yet
     });
   }
 })();

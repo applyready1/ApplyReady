@@ -257,25 +257,66 @@
   /**
    * Checks if the current tab is a job listing page.
    * If yes, scrapes and shows match results.
-   * If no, shows the "no job" view.
+   * If no, shows the "no job" view with option to manually scrape.
    */
   async function tryMatchCurrentTab() {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab) { showView('noJob'); return; }
+      if (!tab) { 
+        showNoJobView(false);
+        return;
+      }
+
+      // Check if we think it's a job page (content script should be checked)
+      let isJobPage = false;
+      try {
+        const statusResponse = await chrome.tabs.sendMessage(tab.id, { action: 'isJobPage' });
+        isJobPage = statusResponse && statusResponse.isJob;
+      } catch (err) {
+        // Content script not injected
+        isJobPage = false;
+      }
 
       // Try to scrape job data from the active tab
-      const response = await chrome.tabs.sendMessage(tab.id, { action: 'scrapeJob' });
+      try {
+        const response = await chrome.tabs.sendMessage(tab.id, { action: 'scrapeJob' });
 
-      if (response && response.jobDescription) {
-        currentJobData = response;
-        showMatchView();
-      } else {
-        showView('noJob');
+        if (response && response.jobDescription) {
+          currentJobData = response;
+          showMatchView();
+          return;
+        }
+      } catch (err) {
+        // Scrape failed
       }
+
+      // If we get here, show no-job view with manual scrape option based on page detection
+      showNoJobView(isJobPage);
     } catch (err) {
-      // Content script not injected (not a supported job page)
-      showView('noJob');
+      // Unexpected error
+      showNoJobView(false);
+    }
+  }
+
+  /**
+   * Shows the no-job view with appropriate messaging and buttons.
+   * @param {boolean} isJobPage - Whether we think this is a job page
+   */
+  function showNoJobView(isJobPage) {
+    showView('noJob');
+
+    const statusMsg = document.getElementById('job-status-message');
+    const detectedInfo = document.getElementById('detected-info');
+    const notDetectedInfo = document.getElementById('not-detected-info');
+
+    if (isJobPage) {
+      statusMsg.textContent = 'Job page detected, but needs manual review.';
+      detectedInfo.style.display = 'block';
+      notDetectedInfo.style.display = 'none';
+    } else {
+      statusMsg.textContent = 'Browse to a job listing to get started.';
+      detectedInfo.style.display = 'none';
+      notDetectedInfo.style.display = 'block';
     }
   }
 
@@ -581,6 +622,52 @@
           activateLicense();
         }
       });
+    }
+
+    // Manual scrape button (from no-job view - not detected)
+    const btnManualScrape = document.getElementById('btn-manual-scrape');
+    if (btnManualScrape) {
+      btnManualScrape.addEventListener('click', performManualScrape);
+    }
+
+    // Analyze button (from no-job view - detected but failed)
+    const btnAnalyzeManual = document.getElementById('btn-analyze-manual');
+    if (btnAnalyzeManual) {
+      btnAnalyzeManual.addEventListener('click', performManualScrape);
+    }
+  }
+
+  /**
+   * Attempts to manually scrape the current page.
+   */
+  async function performManualScrape() {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab) { 
+        alert('Could not access the current tab.');
+        return;
+      }
+
+      // Show loading state
+      const statusMsg = document.getElementById('job-status-message');
+      statusMsg.textContent = 'Scraping page...';
+
+      // Send manual scrape request to content script
+      const response = await chrome.tabs.sendMessage(tab.id, { action: 'manualScrape' });
+
+      if (response && response.jobDescription) {
+        // Success! We got job data
+        currentJobData = response;
+        showMatchView();
+      } else {
+        // Failed to extract job data
+        statusMsg.textContent = 'Could not extract job information from this page. Please try navigating to a different job listing.';
+        alert('Unable to extract job data. This page may not contain a job listing.');
+      }
+    } catch (err) {
+      document.getElementById('job-status-message').textContent = 'Error during manual scrape.';
+      alert('Error: ' + err.message);
+      console.error('Manual scrape error:', err);
     }
   }
 
