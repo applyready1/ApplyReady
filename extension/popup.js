@@ -267,48 +267,53 @@
         return;
       }
 
-      // Check if we think it's a job page (content script should be checked)
+      // Check if we think it's a job page
       let isJobPage = false;
+      let response = null;
+
+      // Attempt 1: Check if page looks like job page
       try {
         const statusResponse = await chrome.tabs.sendMessage(tab.id, { action: 'isJobPage' });
         isJobPage = statusResponse && statusResponse.isJobPage;
       } catch (err) {
-        // Content script not injected - try dynamic injection
-        if (err.message && err.message.includes('Receiving end does not exist')) {
-          try {
-            await chrome.scripting.executeScript({
-              target: { tabId: tab.id },
-              files: ['content.js']
-            });
-            // Retry after injection
-            const statusResponse = await chrome.tabs.sendMessage(tab.id, { action: 'isJobPage' });
-            isJobPage = statusResponse && statusResponse.isJobPage;
-          } catch (injectErr) {
-            // Extension not supported on this page - treat as unknown
-            isJobPage = false;
-          }
-        } else {
+        // Content script not available - try injection
+        try {
+          console.log('Injecting content script...');
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['content.js']
+          });
+          
+          // Give script time to initialize
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Retry status check
+          const statusResponse = await chrome.tabs.sendMessage(tab.id, { action: 'isJobPage' });
+          isJobPage = statusResponse && statusResponse.isJobPage;
+        } catch (injectErr) {
+          console.log('Injection failed:', injectErr.message);
           isJobPage = false;
         }
       }
 
-      // Try to scrape job data from the active tab
+      // Attempt 2: Try to scrape job data
       try {
-        const response = await chrome.tabs.sendMessage(tab.id, { action: 'scrapeJob' });
-
+        response = await chrome.tabs.sendMessage(tab.id, { action: 'scrapeJob' });
+        
         if (response && response.jobDescription) {
           currentJobData = response;
           showMatchView();
           return;
         }
       } catch (err) {
-        // Scrape failed
+        // Already tried injection, just continue
+        console.log('Scrape attempt failed');
       }
 
-      // If we get here, show no-job view with manual scrape option based on page detection
+      // If we get here, show no-job view with manual scrape option
       showNoJobView(isJobPage);
     } catch (err) {
-      // Unexpected error
+      console.error('Error in tryMatchCurrentTab:', err);
       showNoJobView(false);
     }
   }
@@ -667,45 +672,59 @@
       const statusMsg = document.getElementById('job-status-message');
       statusMsg.textContent = 'Scraping page...';
 
-      // Send manual scrape request to content script
-      let response;
+      let response = null;
+
+      // Attempt 1: Try to send message (content script might already be injected)
       try {
         response = await chrome.tabs.sendMessage(tab.id, { action: 'manualScrape' });
-      } catch (msgErr) {
-        // Content script not available - likely not injected on this page
-        if (msgErr.message.includes('Receiving end does not exist')) {
-          // Try to inject content script dynamically for better support
-          try {
-            await chrome.scripting.executeScript({
-              target: { tabId: tab.id },
-              files: ['content.js']
-            });
-            // Retry the message after injection
-            response = await chrome.tabs.sendMessage(tab.id, { action: 'manualScrape' });
-          } catch (injectErr) {
-            statusMsg.textContent = 'Extension not supported on this page. Please refresh and try again.';
-            alert('⚠️ ApplyReady cannot inject into this page. This might be:\n1. A Chrome system page\n2. A page that doesn\'t allow extensions\n3. An unsupported domain\n\nTry refreshing the page or navigating to a different job listing.');
-            console.error('Injection error:', injectErr);
-            return;
-          }
-        } else {
-          throw msgErr;
+        if (response && response.jobDescription) {
+          currentJobData = response;
+          showMatchView();
+          return;
         }
+      } catch (msgErr) {
+        // Content script likely not available, proceed to injection
+        console.log('Initial message failed, attempting injection:', msgErr.message);
       }
 
-      if (response && response.jobDescription) {
-        // Success! We got job data
-        currentJobData = response;
-        showMatchView();
-      } else {
-        // Failed to extract job data
-        statusMsg.textContent = 'Could not extract job information from this page. Please try navigating to a different job listing.';
-        alert('Unable to extract job data. This page may not contain a job listing.');
+      // Attempt 2: Dynamically inject content script and retry
+      try {
+        console.log('Injecting content script into tab', tab.id);
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['content.js']
+        });
+        
+        // Give the script time to initialize
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Retry the message after injection
+        response = await chrome.tabs.sendMessage(tab.id, { action: 'manualScrape' });
+        
+        if (response && response.jobDescription) {
+          currentJobData = response;
+          showMatchView();
+          return;
+        } else {
+          statusMsg.textContent = 'Could not extract job information from this page.';
+          alert('Unable to extract job data. This page may not contain a job listing.');
+        }
+      } catch (injectErr) {
+        console.error('Injection or message failed:', injectErr);
+        statusMsg.textContent = 'Extension not supported on this page.';
+        
+        // Provide helpful error message
+        const errorMsg = injectErr.message || '';
+        if (errorMsg.includes('permission') || errorMsg.includes('system')) {
+          alert('⚠️ ApplyReady cannot access this page due to browser restrictions.\n\nThis happens on:\n• Browser system pages\n• Chrome extension pages\n• Some restricted domains\n\nPlease try on a regular job listing webpage.');
+        } else {
+          alert('⚠️ Could not extract job information from this page.\n\nMake sure you\'re on an actual job listing page with a job description visible.');
+        }
       }
     } catch (err) {
+      console.error('Manual scrape error:', err);
       document.getElementById('job-status-message').textContent = 'Error during manual scrape.';
       alert('Error: ' + err.message);
-      console.error('Manual scrape error:', err);
     }
   }
 

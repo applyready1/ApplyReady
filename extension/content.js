@@ -63,26 +63,53 @@
     // Try to find job description from common patterns
     const descriptionSelectors = [
       'article', 'main', '[role="main"]', '.job-description', 
-      '.job-details', '.posting-description', '[data-testid*="description"]'
+      '.job-details', '.posting-description', '[data-testid*="description"]',
+      '.description-section', '.posting-body', '[data-section-id*="description"]',
+      '.description__content', '[class*="job-description"]', '[class*="details"]'
     ];
     
     let jobDescription = '';
     for (const selector of descriptionSelectors) {
-      const el = document.querySelector(selector);
-      if (el) {
-        jobDescription = el.textContent.trim();
-        if (jobDescription.length > 100) break;
+      try {
+        const el = document.querySelector(selector);
+        if (el) {
+          const text = (el.innerText || el.textContent || '').trim();
+          if (text && text.length > 100 && text.length < 50000) {
+            jobDescription = text;
+            break;
+          }
+        }
+      } catch (e) {
+        // Skip invalid selectors
+      }
+    }
+
+    // If still nothing, grab all visible text from body but limit it
+    if (jobDescription.length < 100) {
+      try {
+        const bodyText = (document.body.innerText || document.body.textContent || '').trim();
+        // Look for text that looks like job description (multiple paragraphs)
+        if (bodyText && bodyText.length > 300 && bodyText.length < 100000) {
+          // Take the middle section which typically contains job details
+          jobDescription = bodyText.substring(0, 8000);
+        }
+      } catch (e) {
+        // Fallback if innerText doesn't work
       }
     }
 
     // Try to find title from common tag patterns
-    const titleSelectors = ['h1', '[data-testid*="title"]', '.job-title'];
+    const titleSelectors = ['h1', '[data-testid*="title"]', '.job-title', '.position-title', '.posting-headline h2'];
     let jobTitle = '';
     for (const selector of titleSelectors) {
-      const el = document.querySelector(selector);
-      if (el) {
-        jobTitle = el.textContent.trim();
-        if (jobTitle.length > 5) break;
+      try {
+        const el = document.querySelector(selector);
+        if (el) {
+          jobTitle = (el.innerText || el.textContent || '').trim();
+          if (jobTitle.length > 5 && jobTitle.length < 300) break;
+        }
+      } catch (e) {
+        // Skip invalid selectors
       }
     }
 
@@ -90,17 +117,23 @@
     let company = '';
     const companySelectors = [
       '[data-testid*="company"]', '.company-name', '.employer', 
-      'meta[name="company"]', '[itemprop="hiringOrganization"]'
+      'meta[name="company"]', '[itemprop="hiringOrganization"]',
+      '.posting-headline .company-name', '[data-automation-id*="company"]'
     ];
     for (const selector of companySelectors) {
-      const el = document.querySelector(selector);
-      if (el) {
-        company = el.getAttribute('content') || el.textContent.trim();
-        if (company.length > 2) break;
+      try {
+        const el = document.querySelector(selector);
+        if (el) {
+          company = el.getAttribute('content') || (el.innerText || el.textContent || '').trim();
+          if (company.length > 2 && company.length < 200) break;
+        }
+      } catch (e) {
+        // Skip invalid selectors
       }
     }
 
-    if (jobDescription.length < 50) return null;
+    // Must have meaningful description
+    if (jobDescription.length < 100) return null;
 
     return {
       jobTitle: jobTitle || 'Job Listing',

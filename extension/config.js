@@ -53,9 +53,9 @@ const CONFIG = {
   // CSS selectors to extract job descriptions from supported sites
   JOB_SITE_SELECTORS: {
     'linkedin.com': {
-      jobDescription: '.jobs-description__content, .jobs-box__html-content, .description__text',
-      jobTitle: '.t-24.job-details-jobs-unified-top-card__job-title, .jobs-unified-top-card__job-title',
-      company: '.job-details-jobs-unified-top-card__company-name, .jobs-unified-top-card__company-name'
+      jobDescription: '.jobs-description__content, .jobs-box__html-content, .description__text, [data-section-id="jobDescriptionDisplay"], .show-more-less-html__markup, article, [role="article"]',
+      jobTitle: '.t-24.job-details-jobs-unified-top-card__job-title, .jobs-unified-top-card__job-title, h1, [data-testid="jobsearch-JobInfoHeader-title"]',
+      company: '.job-details-jobs-unified-top-card__company-name, .jobs-unified-top-card__company-name, .job-details-top-card__company-name, [data-testid*="company"]'
     },
     'indeed.com': {
       jobDescription: '#jobDescriptionText, .jobsearch-jobDescriptionText, [id*="jobDescriptionText"], div[role="region"] > div, .js-job-details-module, [data-automation-id="jobDescriptionText"], .showerd div',
