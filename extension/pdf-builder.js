@@ -14,29 +14,28 @@
  */
 
 /**
- * Generates a tailored resume PDF from structured data.
+ * buildResumePDF - Generates a clean, ATS-friendly resume PDF
  * 
- * @param {{ contact: Object, sections: Array }} resumeData - Parsed/reordered resume
- * @param {string[]} matchingKeywords - Keywords to bold in the resume
- * @param {Object} options - Optional settings
- * @param {string} options.fontFamily - Font name (default: 'helvetica')
- * @param {number} options.fontSize - Body font size (default: 10)
- * @param {number} options.headerSize - Section header size (default: 12)
- * @param {number} options.nameSize - Name size (default: 16)
- * @param {number} options.marginLeft - Left margin in mm (default: 20)
- * @param {number} options.marginRight - Right margin in mm (default: 20)
- * @param {number} options.marginTop - Top margin in mm (default: 15)
- * @returns {jsPDF} - The jsPDF document object (call .save() to download)
+ * This creates a standard resume template, NOT a copy of the user's original.
+ * The original resume formatting (bold, italic, special styles) is intentionally
+ * NOT preserved - we reconstruct a clean, plain-text resume optimized for ATS systems.
+ * 
+ * The resume includes:
+ * - User's contact information
+ * - Sections reordered by job relevance
+ * - Clean, readable formatting
+ * - No complex styling (for ATS compatibility)
  */
 function buildResumePDF(resumeData, matchingKeywords = [], options = {}) {
   const {
     fontFamily = 'helvetica',
     fontSize = 10,
     headerSize = 12,
-    nameSize = 16,
-    marginLeft = 20,
-    marginRight = 20,
-    marginTop = 15
+    nameSize = 14,
+    marginLeft = 15,
+    marginRight = 15,
+    marginTop = 12,
+    marginBottom = 12
   } = options;
 
   /* global jspdf */
@@ -50,12 +49,10 @@ function buildResumePDF(resumeData, matchingKeywords = [], options = {}) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const maxWidth = pageWidth - marginLeft - marginRight;
-  const marginBottom = 15;
   let y = marginTop;
 
   /**
-   * Adds a new page if we're near the bottom.
-   * @param {number} neededSpace - Space in mm needed for next content
+   * Check if we need a page break
    */
   function checkPageBreak(neededSpace = 10) {
     if (y + neededSpace > pageHeight - marginBottom) {
@@ -65,125 +62,94 @@ function buildResumePDF(resumeData, matchingKeywords = [], options = {}) {
   }
 
   /**
-   * Writes a line of text, handling word wrap and keyword bolding.
-   * @param {string} text - The text to write
-   * @param {number} size - Font size
-   * @param {string} style - 'normal', 'bold', or 'italic'
-   * @param {number[]} color - RGB array [r, g, b]
+   * Write a simple line of text (no formatting)
    */
-  function writeText(text, size = fontSize, style = 'normal', color = [33, 33, 33]) {
-    doc.setFont(fontFamily, style);
+  function writeLine(text, size = fontSize, isBold = false) {
+    doc.setFont(fontFamily, isBold ? 'bold' : 'normal');
     doc.setFontSize(size);
-    doc.setTextColor(...color);
+    doc.setTextColor(0, 0, 0);
 
     const lines = doc.splitTextToSize(text, maxWidth);
-    const lineHeight = size * 0.4; // mm per line
+    const lineHeight = size * 0.35;
 
     for (const line of lines) {
-      checkPageBreak(lineHeight + 2);
+      checkPageBreak(lineHeight + 1);
       doc.text(line, marginLeft, y);
       y += lineHeight;
     }
   }
 
-  /**
-   * Writes text with matching keywords rendered in bold.
-   * Simpler approach: render with full text, bold matching keywords.
-   * @param {string} text - The text to write
-   * @param {string[]} keywords - Keywords to bold
-   */
-  function writeTextWithBoldKeywords(text, keywords) {
-    if (!keywords.length) {
-      writeText(text);
-      return;
-    }
-
-    // For simplicity and reliability, just write the text normally with keywords in bold
-    // This avoids complex x-position calculations that cause overlapping
-    doc.setFont(fontFamily, 'normal');
-    doc.setFontSize(fontSize);
-    doc.setTextColor(33, 33, 33);
-
-    const lines = doc.splitTextToSize(text, maxWidth);
-    const lineHeight = fontSize * 0.35;
-
-    for (const line of lines) {
-      checkPageBreak(lineHeight + 2);
-      
-      // For now, just render the line as-is without inline bolding
-      // This prevents overlapping text issues
-      doc.text(line, marginLeft, y);
-      y += lineHeight;
-    }
-  }
-
-  // ── Render Contact Info ──────────────────────────────────
-
+  // ── CONTACT INFORMATION ──────────────────────────────────
+  
   const { contact } = resumeData;
 
   if (contact.name) {
-    writeText(contact.name, nameSize, 'bold', [0, 0, 0]);
-    y += 1;
+    writeLine(contact.name, nameSize, true);
   }
 
-  // Contact details on one line
-  const contactParts = [contact.email, contact.phone, contact.linkedin]
-    .filter(Boolean);
+  // Contact details line
+  const contactParts = [];
+  if (contact.email) contactParts.push(contact.email);
+  if (contact.phone) contactParts.push(contact.phone);
+  if (contact.linkedin) contactParts.push(contact.linkedin);
+  
   if (contactParts.length) {
-    writeText(contactParts.join('  |  '), fontSize - 1, 'normal', [100, 100, 100]);
+    writeLine(contactParts.join(' | '), fontSize - 1, false);
   }
 
   y += 3;
 
-  // Horizontal rule
-  doc.setDrawColor(200, 200, 200);
+  // Horizontal separator
+  doc.setDrawColor(180, 180, 180);
   doc.setLineWidth(0.3);
   doc.line(marginLeft, y, pageWidth - marginRight, y);
-  y += 5;
+  y += 4;
 
-  // ── Render Sections ──────────────────────────────────────
+  // ── SECTIONS ──────────────────────────────────────────────
 
   for (const section of resumeData.sections) {
-    checkPageBreak(15);
+    checkPageBreak(12);
 
     // Section header
-    writeText(section.title.toUpperCase(), headerSize, 'bold', [44, 62, 80]);
+    writeLine(section.title.toUpperCase(), headerSize, true);
     y += 1;
 
-    // Section content — split into paragraphs/bullets
+    // Section content - clean, plain text
     const contentLines = section.content.split('\n').filter(l => l.trim());
 
     for (const line of contentLines) {
       const trimmed = line.trim();
       if (!trimmed) continue;
 
-      // Detect bullet points
-      const bulletMatch = trimmed.match(/^[•\-\*\u2022\u25E6]\s*/);
-      if (bulletMatch) {
-        const bulletText = trimmed.slice(bulletMatch[0].length);
-        const bulletPrefix = '  •  ';
-        writeTextWithBoldKeywords(bulletPrefix + bulletText, matchingKeywords);
-      } else {
-        writeTextWithBoldKeywords(trimmed, matchingKeywords);
-      }
+      // Handle bullet points
+      const isBullet = /^[•\-\*]/.test(trimmed);
+      const displayText = isBullet 
+        ? '• ' + trimmed.replace(/^[•\-\*]\s*/, '')
+        : trimmed;
 
-      y += 0.5; // Small gap between lines
+      writeLine(displayText, fontSize, false);
+      y += 0.5;
     }
 
-    y += 4; // Gap between sections
+    y += 3; // Gap between sections
   }
 
   return doc;
 }
 
 /**
- * Builds and triggers download of the tailored resume PDF.
- * @param {{ contact: Object, sections: Array }} resumeData
- * @param {string[]} matchingKeywords
- * @param {string} jobTitle - Used in the filename
- * @param {string} company - Used in the filename
+ * Downloads the resume as a PDF file.
+ * 
+ * The generated PDF is a CLEAN, ATS-FRIENDLY template - NOT a replica of the user's original.
+ * Original formatting (bold, italic, colors, special styling) is intentionally NOT preserved.
+ * We reconstruct the resume in a plain, standard format optimized for Applicant Tracking Systems.
+ * 
+ * @param {{ contact: Object, sections: Array }} resumeData - Structured resume data
+ * @param {string[]} matchingKeywords - Keywords from job matching
+ * @param {string} jobTitle - Job title (optional, for filename)
+ * @param {string} company - Company name (optional, for filename)
  */
-function downloadResumePDF(resumeData, matchingKeywords, jobTitle = '', company = '') {
+function downloadResumePDF(resumeData, matchingKeywords = [], jobTitle = '', company = '') {
   const doc = buildResumePDF(resumeData, matchingKeywords);
 
   // Build a clean filename

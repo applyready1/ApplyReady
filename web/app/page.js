@@ -91,6 +91,26 @@ export default function LandingPage() {
         </p>
       </section>
 
+      {/* Important Disclaimer */}
+      <section style={{ background: '#fef3c7', borderLeft: '4px solid #f59e0b', padding: '16px', borderRadius: '4px', marginBottom: '32px' }}>
+        <div style={{ fontSize: '14px', lineHeight: '1.6', color: '#78350f' }}>
+          <strong>📌 Important: About Your Original Resume</strong>
+          <p style={{ marginTop: '8px', marginBottom: '0' }}>
+            When you upload your resume, we don't preserve the original formatting (bold, italics, special fonts, colors, etc.). 
+            Instead, we rebuild a <strong>clean, ATS-optimized resume</strong> using:
+          </p>
+          <ul style={{ marginTop: '8px', paddingLeft: '20px', marginBottom: '8px' }}>
+            <li>Your extracted text and information</li>
+            <li>Keywords matched from the job description</li>
+            <li>Professional, readable formatting</li>
+          </ul>
+          <p style={{ marginTop: '8px', marginBottom: '0' }}>
+            This approach maximizes your chances of <strong>passing through ATS systems</strong>, which often struggle with complex formatting anyway. 
+            Your original resume remains safely in your browser — we don't store or modify it.
+          </p>
+        </div>
+      </section>
+
       {/* Comparison */}
       <section style={{ marginBottom: '32px' }}>
         <h2 style={{ marginBottom: '16px' }}>ApplyReady vs Competitors</h2>
