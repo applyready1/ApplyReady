@@ -62,6 +62,16 @@ function buildResumePDF(resumeData, matchingKeywords = [], options = {}) {
   }
 
   /**
+   * Clean extracted text: remove PDF artifacts, normalize whitespace
+   */
+  function cleanText(text) {
+    return text
+      .replace(/[\%\|]/g, '') // Remove PDF extraction artifacts
+      .replace(/\s+/g, ' ')    // Normalize multiple spaces
+      .trim();
+  }
+
+  /**
    * Write a simple line of text (no formatting)
    */
   function writeLine(text, size = fontSize, isBold = false) {
@@ -69,7 +79,10 @@ function buildResumePDF(resumeData, matchingKeywords = [], options = {}) {
     doc.setFontSize(size);
     doc.setTextColor(0, 0, 0);
 
-    const lines = doc.splitTextToSize(text, maxWidth);
+    const cleanedText = cleanText(text);
+    if (!cleanedText) return;
+
+    const lines = doc.splitTextToSize(cleanedText, maxWidth);
     const lineHeight = size * 0.35;
 
     for (const line of lines) {
@@ -77,6 +90,36 @@ function buildResumePDF(resumeData, matchingKeywords = [], options = {}) {
       doc.text(line, marginLeft, y);
       y += lineHeight;
     }
+  }
+
+  /**
+   * Parse and render section content cleanly
+   * Split by sentences for all section types
+   */
+  function formatSectionContent(sectionType, rawContent) {
+    // Aggressive cleaning: remove all PDF artifacts
+    let cleaned = rawContent
+      .replace(/[\%\|\*\^\~\`]/g, '')  // Remove PDF extraction artifacts
+      .replace(/[•\-]+\s*/g, '')        // Remove existing bullets
+      .replace(/\s+/g, ' ')             // Collapse multiple spaces/newlines
+      .replace(/—/g, '-')               // Normalize dashes
+      .trim();
+
+    if (!cleaned || cleaned.length < 5) return [];
+
+    // Split into logical chunks by sentences
+    const sentences = cleaned
+      .split(/(?<=[a-z])\.\s+(?=[A-Z])|(?<=[a-z])\s+(?=[A-Z][a-z]+\s*[,—-])/g)
+      .map(s => s.trim())
+      .filter(s => s.length > 5);
+
+    // If no sentences found, split by any capitalized section
+    if (sentences.length === 0) {
+      const parts = cleaned.split(/\s+(?=[A-Z])/);
+      return parts.map(p => [p.trim()]).filter(p => p[0].length > 5);
+    }
+
+    return sentences.map(s => [s]);
   }
 
   // ── CONTACT INFORMATION ──────────────────────────────────
@@ -114,24 +157,20 @@ function buildResumePDF(resumeData, matchingKeywords = [], options = {}) {
     writeLine(section.title.toUpperCase(), headerSize, true);
     y += 1;
 
-    // Section content - clean, plain text
-    const contentLines = section.content.split('\n').filter(l => l.trim());
+    // Parse and format section content
+    const contentEntries = formatSectionContent(section.type, section.content);
 
-    for (const line of contentLines) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
+    for (const entry of contentEntries) {
+      if (entry.length === 0) continue;
 
-      // Handle bullet points
-      const isBullet = /^[•\-\*]/.test(trimmed);
-      const displayText = isBullet 
-        ? '• ' + trimmed.replace(/^[•\-\*]\s*/, '')
-        : trimmed;
-
-      writeLine(displayText, fontSize, false);
+      // Each entry is a single-item array [text]
+      // Format as a bullet point
+      const bulletText = '• ' + entry[0];
+      writeLine(bulletText, fontSize, false);
       y += 0.5;
     }
 
-    y += 3; // Gap between sections
+    y += 2; // Gap between sections
   }
 
   return doc;
