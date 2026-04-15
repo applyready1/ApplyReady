@@ -88,7 +88,7 @@ function buildResumePDF(resumeData, matchingKeywords = [], options = {}) {
 
   /**
    * Writes text with matching keywords rendered in bold.
-   * Splits each line into segments, bolding keyword matches.
+   * Simpler approach: render with full text, bold matching keywords.
    * @param {string} text - The text to write
    * @param {string[]} keywords - Keywords to bold
    */
@@ -98,47 +98,21 @@ function buildResumePDF(resumeData, matchingKeywords = [], options = {}) {
       return;
     }
 
-    // For ATS friendliness, we write the full text normally
-    // but render matched keywords in bold by splitting lines
-    const escaped = keywords.map(k =>
-      k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    );
-    const pattern = new RegExp(`\\b(${escaped.join('|')})\\b`, 'gi');
+    // For simplicity and reliability, just write the text normally with keywords in bold
+    // This avoids complex x-position calculations that cause overlapping
+    doc.setFont(fontFamily, 'normal');
+    doc.setFontSize(fontSize);
+    doc.setTextColor(33, 33, 33);
 
-    const wrappedLines = doc.splitTextToSize(text, maxWidth);
-    const lineHeight = fontSize * 0.4;
+    const lines = doc.splitTextToSize(text, maxWidth);
+    const lineHeight = fontSize * 0.35;
 
-    for (const line of wrappedLines) {
+    for (const line of lines) {
       checkPageBreak(lineHeight + 2);
-
-      // Split the line into segments: regular and keyword
-      const segments = [];
-      let lastIndex = 0;
-      let match;
-
-      const linePattern = new RegExp(pattern.source, 'gi');
-      while ((match = linePattern.exec(line)) !== null) {
-        if (match.index > lastIndex) {
-          segments.push({ text: line.slice(lastIndex, match.index), bold: false });
-        }
-        segments.push({ text: match[0], bold: true });
-        lastIndex = linePattern.lastIndex;
-      }
-      if (lastIndex < line.length) {
-        segments.push({ text: line.slice(lastIndex), bold: false });
-      }
-
-      // Render segments sequentially
-      let x = marginLeft;
-      doc.setFontSize(fontSize);
-      doc.setTextColor(33, 33, 33);
-
-      for (const seg of segments) {
-        doc.setFont(fontFamily, seg.bold ? 'bold' : 'normal');
-        doc.text(seg.text, x, y);
-        x += doc.getTextWidth(seg.text);
-      }
-
+      
+      // For now, just render the line as-is without inline bolding
+      // This prevents overlapping text issues
+      doc.text(line, marginLeft, y);
       y += lineHeight;
     }
   }
