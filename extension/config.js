@@ -46,9 +46,9 @@ const CONFIG = {
       company: '.job-details-jobs-unified-top-card__company-name, .jobs-unified-top-card__company-name'
     },
     'indeed.com': {
-      jobDescription: '#jobDescriptionText, .jobsearch-jobDescriptionText',
-      jobTitle: '.jobsearch-JobInfoHeader-title, h1[data-testid="jobsearch-JobInfoHeader-title"]',
-      company: '[data-testid="inlineHeader-companyName"], .jobsearch-InlineCompanyRating-companyHeader'
+      jobDescription: '#jobDescriptionText, .jobsearch-jobDescriptionText, [id*="jobDescriptionText"], div[role="region"] > div, .js-job-details-module, [data-automation-id="jobDescriptionText"], .showerd div',
+      jobTitle: '.jobsearch-JobInfoHeader-title, h1[data-testid="jobsearch-JobInfoHeader-title"], h1, [data-automation-id="jobPostingHeader"] h1, div.estimatedSalary ~ h1, .job_header h1',
+      company: '[data-testid="inlineHeader-companyName"], .jobsearch-InlineCompanyRating-companyHeader, [data-automation-id="inlineHeader-companyName"], .jobsearch-InlineCompanyRating-companyHeader, .cmp-company-name, a[data-tn-element="companyName"]'
     },
     'glassdoor.com': {
       jobDescription: '.JobDetails_jobDescription__uW_fK, .desc, #JobDescriptionContainer',
