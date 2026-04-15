@@ -671,6 +671,8 @@
   async function performManualScrape() {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      console.log('[DEBUG] performManualScrape - Tab:', tab?.url);
+      
       if (!tab) { 
         alert('Could not access the current tab.');
         return;
@@ -683,64 +685,80 @@
       let response = null;
 
       // Attempt 1: Try to send message (content script might already be injected)
+      console.log('[DEBUG] Attempt 1: Sending manualScrape message...');
       try {
         response = await chrome.tabs.sendMessage(tab.id, { action: 'manualScrape' });
+        console.log('[DEBUG] Got response:', response);
+        
         if (response && response.jobDescription) {
+          console.log('[DEBUG] ✓ Scrape successful, showing match view');
           currentJobData = response;
           showMatchView();
           return;
         }
       } catch (msgErr) {
         // Content script likely not available, proceed to injection
-        console.log('Initial message failed, attempting injection:', msgErr.message);
+        console.log('[DEBUG] Attempt 1 failed:', msgErr.message);
       }
 
       // Attempt 2: Dynamically inject BOTH config.js and content.js in order
+      console.log('[DEBUG] Attempt 2: Starting dynamic injection...');
       try {
-        console.log('Injecting scripts into tab', tab.id);
+        console.log('[DEBUG] Step 1: Injecting config.js...');
         
         // Inject config.js first (has no dependencies)
         await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           files: ['config.js']
         });
+        console.log('[DEBUG] ✓ config.js injected');
         
         // Then inject content.js (depends on config.js)
+        console.log('[DEBUG] Step 2: Injecting content.js...');
         await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           files: ['content.js']
         });
+        console.log('[DEBUG] ✓ content.js injected');
         
         // Give the scripts time to initialize
+        console.log('[DEBUG] Step 3: Waiting 800ms for scripts to initialize...');
         await new Promise(resolve => setTimeout(resolve, 800));
+        console.log('[DEBUG] ✓ Wait complete');
 
         // Retry the message after injection
+        console.log('[DEBUG] Step 4: Sending manualScrape message after injection...');
         response = await chrome.tabs.sendMessage(tab.id, { action: 'manualScrape' });
+        console.log('[DEBUG] Step 5: Got response:', response);
         
         if (response && response.jobDescription) {
+          console.log('[DEBUG] ✓ SUCCESS: Job data extracted');
           currentJobData = response;
           showMatchView();
           return;
         } else {
+          console.log('[DEBUG] ✗ Response missing jobDescription');
           statusMsg.textContent = 'Could not extract job information from this page.';
-          alert('Unable to extract job data. This page may not contain a job listing.');
+          alert('Unable to extract job data. Check console for details. Response: ' + JSON.stringify(response));
         }
       } catch (injectErr) {
-        console.error('Injection or message failed:', injectErr);
+        console.error('[DEBUG] Injection/message failed:', injectErr);
         statusMsg.textContent = 'Extension not supported on this page.';
         
         // Provide helpful error message
         const errorMsg = injectErr.message || '';
+        console.error('[DEBUG] Error details:', errorMsg);
+        
         if (errorMsg.includes('permission') || errorMsg.includes('system')) {
-          alert('⚠️ ApplyReady cannot access this page due to browser restrictions.\n\nThis happens on:\n• Browser system pages\n• Chrome extension pages\n• Some restricted domains\n\nPlease try on a regular job listing webpage.');
+          alert('⚠️ ApplyReady cannot access this page due to browser restrictions.\n\nError: ' + errorMsg);
         } else {
-          alert('⚠️ Could not extract job information from this page.\n\nMake sure you\'re on an actual job listing page with a job description visible.');
+          alert('⚠️ Injection/Scraping failed.\n\nError: ' + errorMsg + '\n\nCheck browser console (F12) for more details.');
         }
       }
     } catch (err) {
-      console.error('Manual scrape error:', err);
+      console.error('[DEBUG] Manual scrape outer error:', err);
       document.getElementById('job-status-message').textContent = 'Error during manual scrape.';
-      alert('Error: ' + err.message);
+      alert('Error: ' + err.message + '\n\nCheck console for details.');
     }
   }
 

@@ -12,6 +12,17 @@
 (function () {
   'use strict';
 
+  // DEBUG: Log that content script loaded
+  console.log('[CONTENT.JS] ✓ Content script loaded');
+  console.log('[CONTENT.JS] CONFIG available?', typeof CONFIG !== 'undefined');
+  console.log('[CONTENT.JS] Current URL:', window.location.href);
+
+  if (typeof CONFIG === 'undefined') {
+    console.error('[CONTENT.JS] ✗ ERROR: CONFIG is not defined! config.js was not loaded.');
+  } else {
+    console.log('[CONTENT.JS] ✓ CONFIG is available:', Object.keys(CONFIG).length, 'keys');
+  }
+
   /**
    * Check if current URL contains job-related keywords
    * @returns {boolean} - True if URL looks like a job listing
@@ -19,7 +30,12 @@
   function isJobUrlKeyword() {
     const url = window.location.href.toLowerCase();
     const keywords = CONFIG.JOB_URL_KEYWORDS || [];
-    return keywords.some(keyword => url.includes(keyword));
+    const result = keywords.some(keyword => url.includes(keyword));
+    if (result) {
+      const matched = keywords.find(keyword => url.includes(keyword));
+      console.log('[CONTENT.JS] ✓ URL keyword match:', matched);
+    }
+    return result;
   }
 
   /**
@@ -31,8 +47,12 @@
     const sites = Object.keys(CONFIG.JOB_SITE_SELECTORS);
 
     for (const site of sites) {
-      if (hostname.includes(site)) return site;
+      if (hostname.includes(site)) {
+        console.log('[CONTENT.JS] ✓ Detected job site:', site);
+        return site;
+      }
     }
+    console.log('[CONTENT.JS] No known job site detected for hostname:', hostname);
     return null;
   }
 
@@ -60,6 +80,8 @@
    * @returns {object|null} - Job data or null if not found
    */
   function scrapeJobListingGeneric() {
+    console.log('[CONTENT.JS] scrapeJobListingGeneric() called');
+    
     // Try to find job description from common patterns
     const descriptionSelectors = [
       'article', 'main', '[role="main"]', '.job-description', 
@@ -75,6 +97,7 @@
         if (el) {
           const text = (el.innerText || el.textContent || '').trim();
           if (text && text.length > 100 && text.length < 50000) {
+            console.log('[CONTENT.JS] Found description with selector:', selector, '| Length:', text.length);
             jobDescription = text;
             break;
           }
@@ -86,15 +109,18 @@
 
     // If still nothing, grab all visible text from body but limit it
     if (jobDescription.length < 100) {
+      console.log('[CONTENT.JS] No specific selector matched, trying body text...');
       try {
         const bodyText = (document.body.innerText || document.body.textContent || '').trim();
         // Look for text that looks like job description (multiple paragraphs)
         if (bodyText && bodyText.length > 300 && bodyText.length < 100000) {
           // Take the middle section which typically contains job details
           jobDescription = bodyText.substring(0, 8000);
+          console.log('[CONTENT.JS] Extracted body text | Length:', jobDescription.length);
         }
       } catch (e) {
         // Fallback if innerText doesn't work
+        console.log('[CONTENT.JS] Body text extraction failed:', e.message);
       }
     }
 
@@ -106,7 +132,10 @@
         const el = document.querySelector(selector);
         if (el) {
           jobTitle = (el.innerText || el.textContent || '').trim();
-          if (jobTitle.length > 5 && jobTitle.length < 300) break;
+          if (jobTitle.length > 5 && jobTitle.length < 300) {
+            console.log('[CONTENT.JS] Found title with selector:', selector, '| Title:', jobTitle);
+            break;
+          }
         }
       } catch (e) {
         // Skip invalid selectors
@@ -125,7 +154,10 @@
         const el = document.querySelector(selector);
         if (el) {
           company = el.getAttribute('content') || (el.innerText || el.textContent || '').trim();
-          if (company.length > 2 && company.length < 200) break;
+          if (company.length > 2 && company.length < 200) {
+            console.log('[CONTENT.JS] Found company with selector:', selector, '| Company:', company);
+            break;
+          }
         }
       } catch (e) {
         // Skip invalid selectors
@@ -133,8 +165,12 @@
     }
 
     // Must have meaningful description
-    if (jobDescription.length < 100) return null;
+    if (jobDescription.length < 100) {
+      console.log('[CONTENT.JS] ✗ Generic scrape failed: description too short');
+      return null;
+    }
 
+    console.log('[CONTENT.JS] ✓ Generic scrape successful');
     return {
       jobTitle: jobTitle || 'Job Listing',
       company: company || 'Company',
@@ -149,30 +185,44 @@
    * @returns {{ jobTitle: string, company: string, jobDescription: string, url: string, site: string } | null}
    */
   function scrapeJobListing() {
+    console.log('[CONTENT.JS] scrapeJobListing() called');
+    
     // Strategy 1: Try site-specific selectors
     const site = detectJobSite();
+    console.log('[CONTENT.JS] detectJobSite() returned:', site);
+    
     if (site) {
       const selectors = CONFIG.JOB_SITE_SELECTORS[site];
       if (selectors) {
         const jobDescription = extractText(selectors.jobDescription);
+        console.log('[CONTENT.JS] Strategy 1 (site-specific):', jobDescription.length > 0 ? 'Found' : 'Not found');
+        
         if (jobDescription && jobDescription.length >= 50) {
-          return {
+          const result = {
             jobTitle: extractText(selectors.jobTitle),
             company: extractText(selectors.company),
             jobDescription,
             url: window.location.href,
             site
           };
+          console.log('[CONTENT.JS] ✓ Strategy 1 success');
+          return result;
         }
       }
     }
 
     // Strategy 2: If URL looks like a job page but site-specific didn't work, try generic
-    if (isJobUrlKeyword()) {
+    const isKeyword = isJobUrlKeyword();
+    console.log('[CONTENT.JS] isJobUrlKeyword():', isKeyword);
+    
+    if (isKeyword) {
+      console.log('[CONTENT.JS] Trying Strategy 2 (generic scrape)...');
       const genericData = scrapeJobListingGeneric();
+      console.log('[CONTENT.JS] Strategy 2 (generic):', genericData ? 'Found' : 'Not found');
       if (genericData) return genericData;
     }
 
+    console.log('[CONTENT.JS] ✗ All strategies failed');
     return null;
   }
 
@@ -187,17 +237,30 @@
   // -- Message Listener for Both Auto & Manual Scraping ------
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log('[CONTENT.JS] 📨 Message received:', message.action);
+    
     if (message.action === 'scrapeJob') {
       // Scrape using configured selectors
+      console.log('[CONTENT.JS] Processing scrapeJob...');
       const data = scrapeJobListing();
+      console.log('[CONTENT.JS] scrapeJob result:', data ? 'Data found' : 'No data');
       sendResponse(data);
     } else if (message.action === 'isJobPage') {
       // Check if page looks like a job listing
-      sendResponse({ isJobPage: isLikelyJobPage() });
+      const isJob = isLikelyJobPage();
+      console.log('[CONTENT.JS] isJobPage result:', isJob);
+      sendResponse({ isJobPage: isJob });
     } else if (message.action === 'manualScrape') {
       // Manual scrape attempt (user clicked button)
+      console.log('[CONTENT.JS] Processing manualScrape...');
       const data = scrapeJobListing();
+      console.log('[CONTENT.JS] manualScrape result:', data ? 'Data found' : 'No data');
+      if (data) {
+        console.log('[CONTENT.JS] ✓ Job extracted - Title:', data.jobTitle, 'Company:', data.company);
+      }
       sendResponse(data);
+    } else {
+      console.log('[CONTENT.JS] Unknown action:', message.action);
     }
     return true;
   });
