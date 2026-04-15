@@ -271,10 +271,25 @@
       let isJobPage = false;
       try {
         const statusResponse = await chrome.tabs.sendMessage(tab.id, { action: 'isJobPage' });
-        isJobPage = statusResponse && statusResponse.isJob;
+        isJobPage = statusResponse && statusResponse.isJobPage;
       } catch (err) {
-        // Content script not injected
-        isJobPage = false;
+        // Content script not injected - try dynamic injection
+        if (err.message && err.message.includes('Receiving end does not exist')) {
+          try {
+            await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              files: ['content.js']
+            });
+            // Retry after injection
+            const statusResponse = await chrome.tabs.sendMessage(tab.id, { action: 'isJobPage' });
+            isJobPage = statusResponse && statusResponse.isJobPage;
+          } catch (injectErr) {
+            // Extension not supported on this page - treat as unknown
+            isJobPage = false;
+          }
+        } else {
+          isJobPage = false;
+        }
       }
 
       // Try to scrape job data from the active tab
@@ -653,7 +668,30 @@
       statusMsg.textContent = 'Scraping page...';
 
       // Send manual scrape request to content script
-      const response = await chrome.tabs.sendMessage(tab.id, { action: 'manualScrape' });
+      let response;
+      try {
+        response = await chrome.tabs.sendMessage(tab.id, { action: 'manualScrape' });
+      } catch (msgErr) {
+        // Content script not available - likely not injected on this page
+        if (msgErr.message.includes('Receiving end does not exist')) {
+          // Try to inject content script dynamically for better support
+          try {
+            await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              files: ['content.js']
+            });
+            // Retry the message after injection
+            response = await chrome.tabs.sendMessage(tab.id, { action: 'manualScrape' });
+          } catch (injectErr) {
+            statusMsg.textContent = 'Extension not supported on this page. Please refresh and try again.';
+            alert('⚠️ ApplyReady cannot inject into this page. This might be:\n1. A Chrome system page\n2. A page that doesn\'t allow extensions\n3. An unsupported domain\n\nTry refreshing the page or navigating to a different job listing.');
+            console.error('Injection error:', injectErr);
+            return;
+          }
+        } else {
+          throw msgErr;
+        }
+      }
 
       if (response && response.jobDescription) {
         // Success! We got job data

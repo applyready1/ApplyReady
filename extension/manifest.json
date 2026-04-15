@@ -5,7 +5,8 @@
   "description": "Instantly tailor your resume to any job listing. ATS keyword matching, section reordering, and one-click PDF download. Your data never leaves your browser.",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "scripting"
   ],
   "action": {
     "default_popup": "popup.html",
