@@ -37,8 +37,8 @@
         "*://*.lever.co/*",
         "*://*.greenhouse.io/jobs/*",
         "*://*.myworkdayjobs.com/*",
-        "*://careers.*.com/*",
-        "*://jobs.*.com/*",
+        "*://*/careers/*",
+        "*://*/jobs/*",
         "*://*.careers/*",
         "*://*.jobs/*"
       ],
