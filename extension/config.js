@@ -20,9 +20,9 @@ const CONFIG = {
   LICENSE_ACTIVATE_URL: 'https://api.lemonsqueezy.com/v1/licenses/activate',
 
   // ── Web Pages (Vercel) ────────────────────────────────────
-  LANDING_PAGE_URL: 'https://PLACEHOLDER.vercel.app',
-  WELCOME_PAGE_URL: 'https://PLACEHOLDER.vercel.app/welcome',
-  PRIVACY_POLICY_URL: 'https://PLACEHOLDER.vercel.app/privacy',
+  LANDING_PAGE_URL: 'https://applyready-lake.vercel.app',
+  WELCOME_PAGE_URL: 'https://applyready-lake.vercel.app/welcome',
+  PRIVACY_POLICY_URL: 'https://applyready-lake.vercel.app/',
 
   // ── Extension Settings ────────────────────────────────────
   // FREE_MODE: Set to 1 to unlock all features for free (no license needed).
