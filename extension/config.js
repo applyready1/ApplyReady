@@ -25,9 +25,6 @@ const CONFIG = {
   PRIVACY_POLICY_URL: 'https://applyready-lake.vercel.app/',
 
   // ── Extension Settings ────────────────────────────────────
-  // FREE_MODE: Set to 1 to unlock all features for free (no license needed).
-  // Set to 0 to require a paid license key for PDF download.
-  FREE_MODE: 0,
 
   PRODUCT_NAME: 'ApplyReady',
   // PRICE_AMOUNT: Change this single value to update the price everywhere.
