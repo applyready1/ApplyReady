@@ -278,14 +278,22 @@
       } catch (err) {
         // Content script not available - try injection
         try {
-          console.log('Injecting content script...');
+          console.log('Injecting scripts...');
+          
+          // Inject config.js first (has no dependencies)
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['config.js']
+          });
+          
+          // Then inject content.js (depends on config.js)
           await chrome.scripting.executeScript({
             target: { tabId: tab.id },
             files: ['content.js']
           });
           
           // Give script time to initialize
-          await new Promise(resolve => setTimeout(resolve, 300));
+          await new Promise(resolve => setTimeout(resolve, 500));
           
           // Retry status check
           const statusResponse = await chrome.tabs.sendMessage(tab.id, { action: 'isJobPage' });
@@ -687,16 +695,24 @@
         console.log('Initial message failed, attempting injection:', msgErr.message);
       }
 
-      // Attempt 2: Dynamically inject content script and retry
+      // Attempt 2: Dynamically inject BOTH config.js and content.js in order
       try {
-        console.log('Injecting content script into tab', tab.id);
+        console.log('Injecting scripts into tab', tab.id);
+        
+        // Inject config.js first (has no dependencies)
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['config.js']
+        });
+        
+        // Then inject content.js (depends on config.js)
         await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           files: ['content.js']
         });
         
-        // Give the script time to initialize
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Give the scripts time to initialize
+        await new Promise(resolve => setTimeout(resolve, 800));
 
         // Retry the message after injection
         response = await chrome.tabs.sendMessage(tab.id, { action: 'manualScrape' });
