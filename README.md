@@ -91,4 +91,4 @@ web/                     Next.js landing page (deployed on Vercel)
 - [ ] Update `config.js` with real LemonSqueezy store/product IDs and checkout URL
 - [ ] Update `config.js` with real Vercel landing page URL
 - [ ] Replace placeholder icons with final design
-- [ ] Deploy web/ to Vercel
+- [ ] Deploy web/ to Vercel -done
