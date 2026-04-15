@@ -1,0 +1,193 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ApplyReady</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       VIEW 1: Upload Resume (first-time setup)
+       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div id="view-upload" class="view">
+    <div class="header">
+      <h1>ðŸ“„ ApplyReady</h1>
+      <p class="subtitle">Upload your resume to get started</p>
+    </div>
+
+    <div class="upload-area" id="upload-area">
+      <div class="upload-icon">ðŸ“Ž</div>
+      <p>Drag & drop your resume PDF here</p>
+      <p class="small">or</p>
+      <button id="btn-choose-file" class="btn btn-primary">Choose PDF File</button>
+      <input type="file" id="file-input" accept=".pdf" hidden>
+    </div>
+
+    <p class="privacy-note">ðŸ”’ Your resume stays in your browser. We never see it.</p>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       VIEW 2: Review parsed sections (one-time correction)
+       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div id="view-review" class="view hidden">
+    <div class="header">
+      <h1>ðŸ“„ Review Your Resume</h1>
+      <p class="subtitle">We detected these sections. Correct any mistakes.</p>
+    </div>
+
+    <div id="contact-preview" class="contact-preview">
+      <div class="field-row">
+        <label>Name</label>
+        <input type="text" id="contact-name" placeholder="Your name">
+      </div>
+      <div class="field-row">
+        <label>Email</label>
+        <input type="text" id="contact-email" placeholder="email@example.com">
+      </div>
+      <div class="field-row">
+        <label>Phone</label>
+        <input type="text" id="contact-phone" placeholder="+1 (555) 123-4567">
+      </div>
+      <div class="field-row">
+        <label>LinkedIn</label>
+        <input type="text" id="contact-linkedin" placeholder="linkedin.com/in/yourname">
+      </div>
+    </div>
+
+    <div id="sections-list" class="sections-list">
+      <!-- Dynamically populated section cards -->
+    </div>
+
+    <button id="btn-add-section" class="btn btn-secondary btn-small">+ Add Section</button>
+
+    <div class="actions">
+      <button id="btn-save-resume" class="btn btn-primary">Save Resume</button>
+      <button id="btn-reupload" class="btn btn-secondary">Re-upload</button>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       VIEW 3: No job page detected
+       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div id="view-no-job" class="view hidden">
+    <div class="header">
+      <h1>ðŸ“„ ApplyReady</h1>
+      <p class="subtitle">Navigate to a job listing to start matching</p>
+    </div>
+
+    <div class="supported-sites">
+      <p>Supported job sites:</p>
+      <ul>
+        <li>LinkedIn Jobs</li>
+        <li>Indeed</li>
+        <li>Glassdoor</li>
+        <li>ZipRecruiter</li>
+        <li>Monster</li>
+        <li>Dice</li>
+        <li>Lever</li>
+        <li>Greenhouse</li>
+        <li>Workday</li>
+      </ul>
+    </div>
+
+    <div class="actions">
+      <button id="btn-edit-resume" class="btn btn-secondary">Edit Resume</button>
+      <button id="btn-manage-license" class="btn btn-secondary">License Key</button>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       VIEW 4: Match Results (main view on job pages)
+       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div id="view-match" class="view hidden">
+    <div class="header">
+      <h1 id="match-job-title">Job Title</h1>
+      <p class="subtitle" id="match-company">Company</p>
+    </div>
+
+    <!-- Score ring -->
+    <div class="score-container">
+      <div class="score-ring" id="score-ring">
+        <svg viewBox="0 0 100 100">
+          <circle class="score-bg" cx="50" cy="50" r="42" />
+          <circle class="score-fill" id="score-circle" cx="50" cy="50" r="42" />
+        </svg>
+        <div class="score-text" id="score-text">0%</div>
+      </div>
+      <p class="score-label">ATS Match Score</p>
+    </div>
+
+    <!-- Keyword breakdown -->
+    <div class="keyword-section">
+      <div class="keyword-group">
+        <h3>âœ… Matching Keywords <span id="matching-count" class="count">0</span></h3>
+        <div id="matching-keywords" class="keyword-tags"></div>
+      </div>
+      <div class="keyword-group">
+        <h3>âŒ Missing Keywords <span id="missing-count" class="count">0</span></h3>
+        <div id="missing-keywords" class="keyword-tags"></div>
+      </div>
+      <div class="keyword-group" id="phrases-group">
+        <h3>ðŸ”— Missing Phrases <span id="missing-phrases-count" class="count">0</span></h3>
+        <div id="missing-phrases" class="keyword-tags"></div>
+      </div>
+    </div>
+
+    <!-- Section order preview -->
+    <div class="section-order">
+      <h3>ðŸ“‹ Optimized Section Order</h3>
+      <div id="section-order-list" class="section-order-list"></div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="actions" id="match-actions">
+      <button id="btn-tailor" class="btn btn-primary">âœï¸ Tailor & Download PDF</button>
+      <button id="btn-edit-before-download" class="btn btn-secondary">Edit Sections First</button>
+    </div>
+
+    <!-- Premium gate (shown if not licensed) -->
+    <div id="premium-gate" class="premium-gate hidden">
+      <p>ðŸ”’ PDF download requires a license key</p>
+      <button id="btn-buy" class="btn btn-accent">Get ApplyReady â€" <span class="price-tag"></span></button>      <p class="global-note">🌍 Available worldwide — pay in your local currency.</p>      <p id="email-hint" class="email-hint hidden">📧 After purchase, check your email for the license key and paste it below.</p>
+      <div class="license-input-row">
+        <input type="text" id="license-key-input" placeholder="Or enter license key">
+        <button id="btn-activate-key" class="btn btn-small">Activate</button>
+      </div>
+      <p class="license-status" id="license-status"></p>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       VIEW 5: Edit sections before PDF (with keyword guidance)
+       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div id="view-edit" class="view hidden">
+    <div class="header">
+      <h1>âœï¸ Edit Your Resume</h1>
+      <p class="subtitle">Missing keywords shown above each section. Add relevant ones.</p>
+    </div>
+
+    <div id="missing-keywords-banner" class="missing-banner">
+      <h3>Keywords to consider adding:</h3>
+      <div id="edit-missing-keywords" class="keyword-tags"></div>
+    </div>
+
+    <div id="edit-sections-list" class="sections-list">
+      <!-- Dynamically populated editable section cards -->
+    </div>
+
+    <div class="actions">
+      <button id="btn-build-pdf" class="btn btn-primary">âœ… Build & Download PDF</button>
+      <button id="btn-back-to-match" class="btn btn-secondary">â† Back</button>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script src="libs/jspdf.umd.min.js"></script>
+  <script src="resume-parser.js"></script>
+  <script src="keyword-matcher.js"></script>
+  <script src="pdf-builder.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
