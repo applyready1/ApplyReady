@@ -4,10 +4,10 @@
  * Next.js App Router layout. Sets global metadata and font.
  * Deployed on Vercel.
  * 
- * Dependencies: styles/globals.css
+ * Dependencies: globals.css
  */
 
-import './styles/globals.css';
+import './globals.css';
 
 export const metadata = {
   title: 'ApplyReady â€“ Tailor Your Resume to Any Job in Seconds',
