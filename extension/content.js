@@ -1,5 +1,5 @@
 ﻿/**
- * content.js â€” Job Description Scraper (Content Script)
+ * content.js — Job Description Scraper (Content Script)
  * 
  * Injected into supported job listing pages (LinkedIn, Indeed, Glassdoor, etc.).
  * Extracts the job title, company name, and full job description text from the
@@ -7,7 +7,7 @@
  * 
  * Communicates with popup.js via chrome.runtime messaging.
  * 
- * Dependencies: config.js (JOB_SITE_SELECTORS â€” injected via manifest)
+ * Dependencies: config.js (JOB_SITE_SELECTORS — injected via manifest)
  * Injected on: Job listing pages matching manifest content_scripts patterns
  */
 
@@ -70,7 +70,7 @@
     };
   }
 
-  // â”€â”€ Message Listener â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Message Listener --------------------------------------
   // Responds to messages from popup.js requesting job data
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -81,7 +81,7 @@
     return true; // Keep message channel open for async
   });
 
-  // â”€â”€ Badge Notification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Badge Notification ------------------------------------
   // Notify background.js that we're on a job page so it can show a badge
 
   const jobData = scrapeJobListing();

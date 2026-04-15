@@ -1,12 +1,12 @@
 ﻿/**
- * popup.js â€” ApplyReady Popup Controller
+ * popup.js — ApplyReady Popup Controller
  * 
  * Manages all popup views: resume upload, section review, job matching,
  * section editing, and PDF download. Coordinates between resume-parser,
  * keyword-matcher, and pdf-builder modules.
  * 
  * License validation is done directly against LemonSqueezy's API.
- * All resume data is stored in chrome.storage.local â€” never sent anywhere.
+ * All resume data is stored in chrome.storage.local — never sent anywhere.
  * 
  * Dependencies: config.js, resume-parser.js, keyword-matcher.js, pdf-builder.js
  */
@@ -14,14 +14,14 @@
 (function () {
   'use strict';
 
-  // â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- State --------------------------------------------------
 
   let resumeData = null;    // { contact, sections } from parser
   let matchResult = null;   // { score, matchingKeywords, ... } from matcher
   let currentJobData = null; // { jobTitle, company, jobDescription } from content script
   let isPremium = false;
 
-  // â”€â”€ DOM References â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- DOM References -----------------------------------------
 
   const views = {
     upload: document.getElementById('view-upload'),
@@ -31,7 +31,7 @@
     edit: document.getElementById('view-edit')
   };
 
-  // â”€â”€ Initialization â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Initialization -----------------------------------------
 
   document.addEventListener('DOMContentLoaded', init);
 
@@ -54,7 +54,7 @@
     setupGlobalHandlers();
   }
 
-  // â”€â”€ View Management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- View Management ----------------------------------------
 
   /**
    * Shows a single view, hides all others.
@@ -66,7 +66,7 @@
     }
   }
 
-  // â”€â”€ Resume Upload â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Resume Upload ------------------------------------------
 
   function setupUploadHandlers() {
     const uploadArea = document.getElementById('upload-area');
@@ -123,7 +123,7 @@
     }
   }
 
-  // â”€â”€ Review View â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Review View --------------------------------------------
 
   /**
    * Displays the parsed resume for user review and correction.
@@ -169,7 +169,7 @@
           <span class="section-type-badge">${section.type}</span>
           ${editable ? `
             <div class="section-card-actions">
-              <button class="btn-delete-section" title="Delete section">ðŸ—‘ï¸</button>
+              <button class="btn-delete-section" title="Delete section">🗑️</button>
             </div>
           ` : ''}
         </div>
@@ -243,7 +243,7 @@
     await tryMatchCurrentTab();
   }
 
-  // â”€â”€ Load Saved Resume â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Load Saved Resume --------------------------------------
 
   async function loadSavedResume() {
     const result = await chrome.storage.local.get('resumeData');
@@ -252,7 +252,7 @@
     }
   }
 
-  // â”€â”€ Try Matching Current Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Try Matching Current Tab -------------------------------
 
   /**
    * Checks if the current tab is a job listing page.
@@ -279,7 +279,7 @@
     }
   }
 
-  // â”€â”€ Match View â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Match View ---------------------------------------------
 
   /**
    * Displays the keyword match results for the current job listing.
@@ -378,7 +378,7 @@
     `).join('');
   }
 
-  // â”€â”€ Edit View â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Edit View ----------------------------------------------
 
   /**
    * Shows the edit view where users can modify sections with keyword guidance.
@@ -430,7 +430,7 @@
     chrome.storage.local.set({ resumeData });
   }
 
-  // â”€â”€ Tailor & Download â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Tailor & Download --------------------------------------
 
   /**
    * Reorders sections, highlights keywords, and generates the tailored PDF.
@@ -460,7 +460,7 @@
     );
   }
 
-  // â”€â”€ Premium / License â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Premium / License --------------------------------------
 
   /**
    * Loads premium status from chrome.storage.local.
@@ -535,24 +535,24 @@
         await chrome.storage.local.set({
           license: { valid: true, key, activatedAt: new Date().toISOString() }
         });
-        status.textContent = 'âœ… License activated! You can now download tailored PDFs.';
+        status.textContent = '✓ License activated! You can now download tailored PDFs.';
         status.className = 'license-status success';
         updatePremiumUI();
       } else if (data.error) {
-        status.textContent = `âŒ ${data.error}`;
+        status.textContent = `✘ ${data.error}`;
         status.className = 'license-status error';
       } else {
-        status.textContent = 'âŒ Invalid license key. Please check and try again.';
+        status.textContent = '✘ Invalid license key. Please check and try again.';
         status.className = 'license-status error';
       }
     } catch (err) {
-      status.textContent = 'âŒ Network error. Please try again.';
+      status.textContent = '✘ Network error. Please try again.';
       status.className = 'license-status error';
       console.error('License activation error:', err);
     }
   }
 
-  // â”€â”€ Global Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Global Handlers ----------------------------------------
 
   function setupGlobalHandlers() {
     // Edit resume button (from no-job view)
@@ -584,7 +584,7 @@
     }
   }
 
-  // â”€â”€ Utilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Utilities ----------------------------------------------
 
   /**
    * Escapes HTML special characters to prevent XSS.

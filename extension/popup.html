@@ -7,32 +7,32 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  <!-- ----------------------------------------------------------
        VIEW 1: Upload Resume (first-time setup)
-       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+       ---------------------------------------------------------- -->
   <div id="view-upload" class="view">
     <div class="header">
-      <h1>ðŸ“„ ApplyReady</h1>
+      <h1>📄 ApplyReady</h1>
       <p class="subtitle">Upload your resume to get started</p>
     </div>
 
     <div class="upload-area" id="upload-area">
-      <div class="upload-icon">ðŸ“Ž</div>
+      <div class="upload-icon">📎</div>
       <p>Drag & drop your resume PDF here</p>
       <p class="small">or</p>
       <button id="btn-choose-file" class="btn btn-primary">Choose PDF File</button>
       <input type="file" id="file-input" accept=".pdf" hidden>
     </div>
 
-    <p class="privacy-note">ðŸ”’ Your resume stays in your browser. We never see it.</p>
+    <p class="privacy-note">✅ Your resume stays in your browser. We never see it.</p>
   </div>
 
-  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  <!-- ----------------------------------------------------------
        VIEW 2: Review parsed sections (one-time correction)
-       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+       ---------------------------------------------------------- -->
   <div id="view-review" class="view hidden">
     <div class="header">
-      <h1>ðŸ“„ Review Your Resume</h1>
+      <h1>📄 Review Your Resume</h1>
       <p class="subtitle">We detected these sections. Correct any mistakes.</p>
     </div>
 
@@ -67,12 +67,12 @@
     </div>
   </div>
 
-  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  <!-- ----------------------------------------------------------
        VIEW 3: No job page detected
-       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+       ---------------------------------------------------------- -->
   <div id="view-no-job" class="view hidden">
     <div class="header">
-      <h1>ðŸ“„ ApplyReady</h1>
+      <h1>📄 ApplyReady</h1>
       <p class="subtitle">Navigate to a job listing to start matching</p>
     </div>
 
@@ -97,9 +97,9 @@
     </div>
   </div>
 
-  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  <!-- ----------------------------------------------------------
        VIEW 4: Match Results (main view on job pages)
-       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+       ---------------------------------------------------------- -->
   <div id="view-match" class="view hidden">
     <div class="header">
       <h1 id="match-job-title">Job Title</h1>
@@ -121,35 +121,35 @@
     <!-- Keyword breakdown -->
     <div class="keyword-section">
       <div class="keyword-group">
-        <h3>âœ… Matching Keywords <span id="matching-count" class="count">0</span></h3>
+        <h3>✓ Matching Keywords <span id="matching-count" class="count">0</span></h3>
         <div id="matching-keywords" class="keyword-tags"></div>
       </div>
       <div class="keyword-group">
-        <h3>âŒ Missing Keywords <span id="missing-count" class="count">0</span></h3>
+        <h3>✘ Missing Keywords <span id="missing-count" class="count">0</span></h3>
         <div id="missing-keywords" class="keyword-tags"></div>
       </div>
       <div class="keyword-group" id="phrases-group">
-        <h3>ðŸ”— Missing Phrases <span id="missing-phrases-count" class="count">0</span></h3>
+        <h3>🔹 Missing Phrases <span id="missing-phrases-count" class="count">0</span></h3>
         <div id="missing-phrases" class="keyword-tags"></div>
       </div>
     </div>
 
     <!-- Section order preview -->
     <div class="section-order">
-      <h3>ðŸ“‹ Optimized Section Order</h3>
+      <h3>📋 Optimized Section Order</h3>
       <div id="section-order-list" class="section-order-list"></div>
     </div>
 
     <!-- Action buttons -->
     <div class="actions" id="match-actions">
-      <button id="btn-tailor" class="btn btn-primary">âœï¸ Tailor & Download PDF</button>
+      <button id="btn-tailor" class="btn btn-primary">✏️ Tailor & Download PDF</button>
       <button id="btn-edit-before-download" class="btn btn-secondary">Edit Sections First</button>
     </div>
 
     <!-- Premium gate (shown if not licensed) -->
     <div id="premium-gate" class="premium-gate hidden">
-      <p>ðŸ”’ PDF download requires a license key</p>
-      <button id="btn-buy" class="btn btn-accent">Get ApplyReady â€" <span class="price-tag"></span></button>      <p class="global-note">🌍 Available worldwide — pay in your local currency.</p>      <p id="email-hint" class="email-hint hidden">📧 After purchase, check your email for the license key and paste it below.</p>
+      <p>✅ PDF download requires a license key</p>
+      <button id="btn-buy" class="btn btn-accent">Get ApplyReady —" <span class="price-tag"></span></button>      <p class="global-note">🌍 Available worldwide — pay in your local currency.</p>      <p id="email-hint" class="email-hint hidden">📧 After purchase, check your email for the license key and paste it below.</p>
       <div class="license-input-row">
         <input type="text" id="license-key-input" placeholder="Or enter license key">
         <button id="btn-activate-key" class="btn btn-small">Activate</button>
@@ -158,12 +158,12 @@
     </div>
   </div>
 
-  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  <!-- ----------------------------------------------------------
        VIEW 5: Edit sections before PDF (with keyword guidance)
-       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+       ---------------------------------------------------------- -->
   <div id="view-edit" class="view hidden">
     <div class="header">
-      <h1>âœï¸ Edit Your Resume</h1>
+      <h1>✏️ Edit Your Resume</h1>
       <p class="subtitle">Missing keywords shown above each section. Add relevant ones.</p>
     </div>
 
@@ -177,8 +177,8 @@
     </div>
 
     <div class="actions">
-      <button id="btn-build-pdf" class="btn btn-primary">âœ… Build & Download PDF</button>
-      <button id="btn-back-to-match" class="btn btn-secondary">â† Back</button>
+      <button id="btn-build-pdf" class="btn btn-primary">✓ Build & Download PDF</button>
+      <button id="btn-back-to-match" class="btn btn-secondary">← Back</button>
     </div>
   </div>
 

@@ -14,7 +14,7 @@ export default function LandingPage() {
   return (
     <main style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px', fontFamily: 'system-ui, sans-serif' }}>
       <h1 style={{ fontSize: '2.5rem', marginBottom: '8px' }}>
-        ðŸ“„ ApplyReady
+        📄 ApplyReady
       </h1>
       <p style={{ fontSize: '1.25rem', color: '#6b7280', marginBottom: '32px' }}>
         Tailor your resume to any job listing in seconds. Free ATS matching. {PRICE} one-time for PDF download.
@@ -24,7 +24,7 @@ export default function LandingPage() {
       <section style={{ background: '#eff6ff', borderRadius: '12px', padding: '32px', marginBottom: '32px' }}>
         <h2 style={{ marginBottom: '16px' }}>How It Works</h2>
         <ol style={{ lineHeight: '2', paddingLeft: '20px' }}>
-          <li>Upload your resume PDF (stays in your browser â€” we never see it)</li>
+          <li>Upload your resume PDF (stays in your browser — we never see it)</li>
           <li>Browse to any job listing on LinkedIn, Indeed, Glassdoor, etc.</li>
           <li>See your ATS match score and missing keywords instantly</li>
           <li>Edit your sections with keyword guidance</li>
@@ -37,19 +37,19 @@ export default function LandingPage() {
         <h2 style={{ marginBottom: '16px' }}>Why ApplyReady?</h2>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
-            <strong>ðŸ”’ 100% Private</strong>
+            <strong>✅ 100% Private</strong>
             <p style={{ color: '#6b7280', fontSize: '14px' }}>Your resume never leaves your browser. Zero data collection.</p>
           </div>
           <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
-            <strong>âš¡ Instant Matching</strong>
+            <strong>✅ Instant Matching</strong>
             <p style={{ color: '#6b7280', fontSize: '14px' }}>ATS keyword score in under 1 second. Free, unlimited scans.</p>
           </div>
           <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
-            <strong>ðŸ“‹ Smart Reordering</strong>
+            <strong>📋 Smart Reordering</strong>
             <p style={{ color: '#6b7280', fontSize: '14px' }}>Sections auto-sorted by relevance. Most important skills first.</p>
           </div>
           <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
-            <strong>ðŸ’° {PRICE} Once, Yours Forever</strong>
+            <strong>💰 {PRICE} Once, Yours Forever</strong>
             <p style={{ color: '#6b7280', fontSize: '14px' }}>No subscription. No credits. One payment, unlimited use.</p>
           </div>
         </div>
@@ -70,7 +70,7 @@ export default function LandingPage() {
             textDecoration: 'none'
           }}
         >
-          Add to Chrome â€” Free
+          Add to Chrome — Free
         </a>
         <p style={{ color: '#9ca3af', fontSize: '13px', marginTop: '8px' }}>
           Free ATS matching. {PRICE} one-time for PDF download.
@@ -95,27 +95,27 @@ export default function LandingPage() {
           <tbody>
             <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
               <td style={{ padding: '8px' }}>ATS Keyword Matching</td>
-              <td style={{ padding: '8px', textAlign: 'center' }}>âœ… Free</td>
-              <td style={{ padding: '8px', textAlign: 'center' }}>âœ…</td>
-              <td style={{ padding: '8px', textAlign: 'center' }}>âœ…</td>
+              <td style={{ padding: '8px', textAlign: 'center' }}>✓ Free</td>
+              <td style={{ padding: '8px', textAlign: 'center' }}>✓</td>
+              <td style={{ padding: '8px', textAlign: 'center' }}>✓</td>
             </tr>
             <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
               <td style={{ padding: '8px' }}>Tailored Resume PDF</td>
-              <td style={{ padding: '8px', textAlign: 'center' }}>âœ… {PRICE} once</td>
-              <td style={{ padding: '8px', textAlign: 'center' }}>âŒ</td>
-              <td style={{ padding: '8px', textAlign: 'center' }}>âœ…</td>
+              <td style={{ padding: '8px', textAlign: 'center' }}>✓ {PRICE} once</td>
+              <td style={{ padding: '8px', textAlign: 'center' }}>✘</td>
+              <td style={{ padding: '8px', textAlign: 'center' }}>✓</td>
             </tr>
             <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
               <td style={{ padding: '8px' }}>Privacy (no data sent)</td>
-              <td style={{ padding: '8px', textAlign: 'center' }}>âœ…</td>
-              <td style={{ padding: '8px', textAlign: 'center' }}>âŒ</td>
-              <td style={{ padding: '8px', textAlign: 'center' }}>âŒ</td>
+              <td style={{ padding: '8px', textAlign: 'center' }}>✓</td>
+              <td style={{ padding: '8px', textAlign: 'center' }}>✘</td>
+              <td style={{ padding: '8px', textAlign: 'center' }}>✘</td>
             </tr>
             <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
               <td style={{ padding: '8px' }}>No account required</td>
-              <td style={{ padding: '8px', textAlign: 'center' }}>âœ…</td>
-              <td style={{ padding: '8px', textAlign: 'center' }}>âŒ</td>
-              <td style={{ padding: '8px', textAlign: 'center' }}>âŒ</td>
+              <td style={{ padding: '8px', textAlign: 'center' }}>✓</td>
+              <td style={{ padding: '8px', textAlign: 'center' }}>✘</td>
+              <td style={{ padding: '8px', textAlign: 'center' }}>✘</td>
             </tr>
             <tr>
               <td style={{ padding: '8px' }}>Price</td>
@@ -132,7 +132,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer style={{ textAlign: 'center', color: '#9ca3af', fontSize: '12px', paddingTop: '24px', borderTop: '1px solid #f3f4f6' }}>
-        <p>Â© 2026 ApplyReady. All rights reserved.</p>
+        <p>© 2026 ApplyReady. All rights reserved.</p>
         <p style={{ marginTop: '4px' }}>
           <a href="/privacy" style={{ color: '#6b7280' }}>Privacy Policy</a>
         </p>

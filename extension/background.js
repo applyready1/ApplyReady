@@ -1,5 +1,5 @@
 ﻿/**
- * background.js â€” ApplyReady Service Worker
+ * background.js — ApplyReady Service Worker
  * 
  * Handles extension lifecycle events:
  * - Sets badge icon/text when content script detects a job page
@@ -9,7 +9,7 @@
  * Dependencies: config.js
  */
 
-// â”€â”€ Installation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Installation ---------------------------------------------
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
@@ -17,7 +17,7 @@ chrome.runtime.onInstalled.addListener((details) => {
   }
 });
 
-// â”€â”€ Badge Management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Badge Management -----------------------------------------
 
 /**
  * Listens for messages from content.js indicating a job page was detected.
@@ -30,7 +30,7 @@ chrome.runtime.onMessage.addListener((message, sender) => {
   }
 });
 
-// â”€â”€ Tab Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Tab Navigation -------------------------------------------
 
 /**
  * Clears the badge when the user navigates away from a job page.

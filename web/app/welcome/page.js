@@ -13,7 +13,7 @@ export default function WelcomePage() {
   return (
     <main style={{ maxWidth: '640px', margin: '0 auto', padding: '40px 20px', fontFamily: 'system-ui, sans-serif' }}>
       <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>
-        ðŸŽ‰ Welcome to ApplyReady!
+        🎉 Welcome to ApplyReady!
       </h1>
       <p style={{ fontSize: '1.1rem', color: '#6b7280', marginBottom: '32px' }}>
         You're all set. Here's how to get started in 3 steps.
@@ -24,7 +24,7 @@ export default function WelcomePage() {
         <h2 style={{ fontSize: '1.1rem', marginBottom: '8px' }}>Step 1: Upload Your Resume</h2>
         <p style={{ color: '#4b5563', fontSize: '14px' }}>
           Click the ApplyReady icon in your browser toolbar and upload your resume PDF.
-          Your resume stays in your browser â€” we never see it.
+          Your resume stays in your browser — we never see it.
         </p>
       </div>
 
@@ -60,23 +60,23 @@ export default function WelcomePage() {
           <tbody>
             <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
               <td style={{ padding: '6px' }}>ATS Match Score</td>
-              <td style={{ padding: '6px', textAlign: 'center' }}>âœ…</td>
-              <td style={{ padding: '6px', textAlign: 'center' }}>âœ…</td>
+              <td style={{ padding: '6px', textAlign: 'center' }}>✓</td>
+              <td style={{ padding: '6px', textAlign: 'center' }}>✓</td>
             </tr>
             <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
               <td style={{ padding: '6px' }}>Missing Keywords</td>
-              <td style={{ padding: '6px', textAlign: 'center' }}>âœ…</td>
-              <td style={{ padding: '6px', textAlign: 'center' }}>âœ…</td>
+              <td style={{ padding: '6px', textAlign: 'center' }}>✓</td>
+              <td style={{ padding: '6px', textAlign: 'center' }}>✓</td>
             </tr>
             <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
               <td style={{ padding: '6px' }}>Section Reordering</td>
-              <td style={{ padding: '6px', textAlign: 'center' }}>âœ… (preview)</td>
-              <td style={{ padding: '6px', textAlign: 'center' }}>âœ…</td>
+              <td style={{ padding: '6px', textAlign: 'center' }}>✓ (preview)</td>
+              <td style={{ padding: '6px', textAlign: 'center' }}>✓</td>
             </tr>
             <tr>
               <td style={{ padding: '6px' }}>Download Tailored PDF</td>
-              <td style={{ padding: '6px', textAlign: 'center' }}>âŒ</td>
-              <td style={{ padding: '6px', textAlign: 'center' }}>âœ… Unlimited</td>
+              <td style={{ padding: '6px', textAlign: 'center' }}>✘</td>
+              <td style={{ padding: '6px', textAlign: 'center' }}>✓ Unlimited</td>
             </tr>
           </tbody>
         </table>
