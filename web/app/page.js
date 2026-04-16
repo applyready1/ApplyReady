@@ -119,8 +119,8 @@ export default function LandingPage() {
             <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
               <th style={{ textAlign: 'left', padding: '8px' }}>Feature</th>
               <th style={{ padding: '8px' }}>ApplyReady</th>
-              <th style={{ padding: '8px' }}>Jobscan ($50/mo)</th>
-              <th style={{ padding: '8px' }}>Teal ($29/mo)</th>
+              <th style={{ padding: '8px' }}>The Leading Resume Scanner($50/mo)</th>
+              <th style={{ padding: '8px' }}>The Premium Job Tracker ($29/mo)</th>
             </tr>
           </thead>
           <tbody>
