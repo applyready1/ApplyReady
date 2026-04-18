@@ -27,22 +27,10 @@
   "content_scripts": [
     {
       "matches": [
-        "*://*.linkedin.com/jobs/*",
-        "*://*.indeed.com/*",
-        "*://*.glassdoor.com/job-listing/*",
-        "*://*.glassdoor.co.in/job-listing/*",
-        "*://*.ziprecruiter.com/jobs/*",
-        "*://*.monster.com/job-openings/*",
-        "*://*.dice.com/job-detail/*",
-        "*://*.lever.co/*",
-        "*://*.greenhouse.io/jobs/*",
-        "*://*.myworkdayjobs.com/*",
-        "*://*/careers/*",
-        "*://*/jobs/*",
-        "*://*.careers/*",
-        "*://*.jobs/*"
+        "https://*/*",
+        "http://localhost/*"
       ],
-      "js": ["content.js"],
+      "js": ["config.js", "content.js"],
       "css": ["content.css"],
       "run_at": "document_idle"
     }
