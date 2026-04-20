@@ -20,8 +20,8 @@ function renderSkillRow(skill) {
         </div>
       </div>
       <div class="component-actions">
-        <button class="btn-edit" onclick="editSkill('${skill.id}')">Edit</button>
-        <button class="btn-remove" onclick="removeComponentRow('${skill.id}')">Remove</button>
+        <button class="btn-edit btn-edit-skill" data-skill-id="${skill.id}">Edit</button>
+        <button class="btn-remove btn-remove-skill" data-skill-id="${skill.id}">Remove</button>
       </div>
     </div>
   `;
@@ -45,8 +45,8 @@ function renderExperienceRow(exp) {
         </div>
       </div>
       <div class="component-actions">
-        <button class="btn-edit" onclick="editExperience('${exp.id}')">Edit</button>
-        <button class="btn-remove" onclick="removeComponentRow('${exp.id}')">Remove</button>
+        <button class="btn-edit btn-edit-experience" data-exp-id="${exp.id}">Edit</button>
+        <button class="btn-remove btn-remove-experience" data-exp-id="${exp.id}">Remove</button>
       </div>
     </div>
   `;
@@ -68,8 +68,8 @@ function renderEducationRow(edu) {
         ${edu.description ? `<div class="component-preview">${edu.description}</div>` : ''}
       </div>
       <div class="component-actions">
-        <button class="btn-edit" onclick="editEducation('${edu.id}')">Edit</button>
-        <button class="btn-remove" onclick="removeComponentRow('${edu.id}')">Remove</button>
+        <button class="btn-edit btn-edit-education" data-edu-id="${edu.id}">Edit</button>
+        <button class="btn-remove btn-remove-education" data-edu-id="${edu.id}">Remove</button>
       </div>
     </div>
   `;
@@ -91,8 +91,8 @@ function renderProjectRow(proj) {
         ${proj.link ? `<div class="component-meta"><a href="${proj.link}" target="_blank">View Project</a></div>` : ''}
       </div>
       <div class="component-actions">
-        <button class="btn-edit" onclick="editProject('${proj.id}')">Edit</button>
-        <button class="btn-remove" onclick="removeComponentRow('${proj.id}')">Remove</button>
+        <button class="btn-edit btn-edit-project" data-proj-id="${proj.id}">Edit</button>
+        <button class="btn-remove btn-remove-project" data-proj-id="${proj.id}">Remove</button>
       </div>
     </div>
   `;
@@ -129,8 +129,8 @@ function renderSkillForm(skill = null) {
         </div>
       </div>
       <div class="form-actions">
-        <button class="btn btn-primary" onclick="saveSkillForm('${id}')">Save Skill</button>
-        <button class="btn btn-secondary" onclick="cancelEdit()">Cancel</button>
+        <button class="btn btn-primary btn-save-skill" data-skill-id="${id}">Save Skill</button>
+        <button class="btn btn-secondary btn-cancel-form">Cancel</button>
       </div>
     </div>
   `;
@@ -163,12 +163,12 @@ function renderExperienceForm(exp = null) {
         <input type="text" class="form-control" id="exp-timeline" placeholder="e.g., Jan 2020 - Present" value="${timeline}">
       </div>
       <div class="form-group">
-        <label>Description (one bullet per line)</label>
-        <textarea class="form-control" id="exp-description" placeholder="• Led team of 5 engineers&#10;• Improved performance by 40%" rows="5">${description}</textarea>
+        <label>Description</label>
+        <textarea class="form-control" id="exp-description" placeholder="Describe your accomplishments and responsibilities" rows="5">${description}</textarea>
       </div>
       <div class="form-actions">
-        <button class="btn btn-primary" onclick="saveExperienceForm('${id}')">Save Experience</button>
-        <button class="btn btn-secondary" onclick="cancelEdit()">Cancel</button>
+        <button class="btn btn-primary btn-save-experience" data-exp-id="${id}">Save Experience</button>
+        <button class="btn btn-secondary btn-cancel-form">Cancel</button>
       </div>
     </div>
   `;
@@ -212,8 +212,8 @@ function renderEducationForm(edu = null) {
         <textarea class="form-control" id="edu-description" placeholder="GPA, honors, relevant coursework, etc." rows="3">${description}</textarea>
       </div>
       <div class="form-actions">
-        <button class="btn btn-primary" onclick="saveEducationForm('${id}')">Save Education</button>
-        <button class="btn btn-secondary" onclick="cancelEdit()">Cancel</button>
+        <button class="btn btn-primary btn-save-education" data-edu-id="${id}">Save Education</button>
+        <button class="btn btn-secondary btn-cancel-form">Cancel</button>
       </div>
     </div>
   `;
@@ -243,8 +243,8 @@ function renderProjectForm(proj = null) {
         <input type="url" class="form-control" id="proj-link" placeholder="https://github.com/..." value="${link}">
       </div>
       <div class="form-actions">
-        <button class="btn btn-primary" onclick="saveProjectForm('${id}')">Save Project</button>
-        <button class="btn btn-secondary" onclick="cancelEdit()">Cancel</button>
+        <button class="btn btn-primary btn-save-project" data-proj-id="${id}">Save Project</button>
+        <button class="btn btn-secondary btn-cancel-form">Cancel</button>
       </div>
     </div>
   `;
@@ -285,4 +285,115 @@ function renderResumeComponents(resume) {
   }
 
   return html;
+}
+
+/**
+ * Attach event listeners to component action buttons
+ * This must be called after DOM elements are rendered
+ */
+function attachComponentEventListeners() {
+  // Skill row buttons
+  document.querySelectorAll('.btn-edit-skill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const skillId = btn.dataset.skillId;
+      window.editSkill(skillId);
+    });
+  });
+
+  document.querySelectorAll('.btn-remove-skill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const skillId = btn.dataset.skillId;
+      window.removeComponentRow(skillId);
+    });
+  });
+
+  // Experience row buttons
+  document.querySelectorAll('.btn-edit-experience').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const expId = btn.dataset.expId;
+      window.editExperience(expId);
+    });
+  });
+
+  document.querySelectorAll('.btn-remove-experience').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const expId = btn.dataset.expId;
+      window.removeComponentRow(expId);
+    });
+  });
+
+  // Education row buttons
+  document.querySelectorAll('.btn-edit-education').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const eduId = btn.dataset.eduId;
+      window.editEducation(eduId);
+    });
+  });
+
+  document.querySelectorAll('.btn-remove-education').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const eduId = btn.dataset.eduId;
+      window.removeComponentRow(eduId);
+    });
+  });
+
+  // Project row buttons
+  document.querySelectorAll('.btn-edit-project').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const projId = btn.dataset.projId;
+      window.editProject(projId);
+    });
+  });
+
+  document.querySelectorAll('.btn-remove-project').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const projId = btn.dataset.projId;
+      window.removeComponentRow(projId);
+    });
+  });
+}
+
+/**
+ * Attach event listeners to form buttons
+ * This must be called after form elements are rendered
+ */
+function attachFormEventListeners() {
+  // Save skill form button
+  document.querySelectorAll('.btn-save-skill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const skillId = btn.dataset.skillId;
+      window.saveSkillForm(skillId);
+    });
+  });
+
+  // Save experience form button
+  document.querySelectorAll('.btn-save-experience').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const expId = btn.dataset.expId;
+      window.saveExperienceForm(expId);
+    });
+  });
+
+  // Save education form button
+  document.querySelectorAll('.btn-save-education').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const eduId = btn.dataset.eduId;
+      window.saveEducationForm(eduId);
+    });
+  });
+
+  // Save project form button
+  document.querySelectorAll('.btn-save-project').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const projId = btn.dataset.projId;
+      window.saveProjectForm(projId);
+    });
+  });
+
+  // Cancel form buttons
+  document.querySelectorAll('.btn-cancel-form').forEach(btn => {
+    btn.addEventListener('click', () => {
+      window.cancelEdit();
+    });
+  });
 }

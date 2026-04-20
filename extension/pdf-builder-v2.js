@@ -35,7 +35,11 @@ function buildResumePDFv2(resume, options = {}) {
   // Safe text cleanup
   function cleanText(text) {
     if (!text) return '';
-    return text.replace(/[%|§¶`^~]/g, '').trim();
+    // Remove ALL bullet/indexing characters and artifacts
+    let cleaned = text.replace(/[%|§¶`^~•\-\*]/g, '').trim();
+    // Remove any line that starts only with indexing (%, |, •, -, *, etc)
+    cleaned = cleaned.replace(/^[%|•\-\*§¶`^~]\s*/gm, '').trim();
+    return cleaned;
   }
 
   function checkPageBreak(neededSpace = 10) {
@@ -88,25 +92,24 @@ function buildResumePDFv2(resume, options = {}) {
   if (resume.contact.linkedin) contactParts.push(resume.contact.linkedin);
 
   if (contactParts.length > 0) {
-    addText(contactParts.join(' | '), fontSize - 1, false);
+    addText(contactParts.join(' - '), fontSize - 1, false);
   }
 
   addSpace(3);
-  addLine();
-
   // ── SUMMARY ───────────────────────────────
 
   if (resume.summary) {
     checkPageBreak(15);
     addText('PROFESSIONAL SUMMARY', headerSize, true);
-    addSpace(1.5);
+    addSpace(1);
     addText(resume.summary, fontSize, false);
-    addSpace(3);
+    addSpace(4);
   }
 
   // ── EXPERIENCE ────────────────────────────
 
   if (resume.experience && resume.experience.length > 0) {
+    addSpace(2); // Add line space before section
     checkPageBreak(20);
     addText('WORK EXPERIENCE', headerSize, true);
     addSpace(1.5);
@@ -127,13 +130,16 @@ function buildResumePDFv2(resume, options = {}) {
         addSpace(0.5);
       }
 
-      // Description/bullets
+      // Description (clean bullets from each line)
       if (exp.description) {
-        const bullets = exp.description.split('\n').filter(b => b.trim());
-        for (const bullet of bullets) {
-          const bulletText = bullet.trim().startsWith('•') ? bullet.trim() : '• ' + bullet.trim();
-          addText(bulletText, fontSize, false, 2);
-          addSpace(0.6);
+        const lines = exp.description.split('\n').filter(b => b.trim());
+        for (const line of lines) {
+          // Remove bullet characters from beginning of each line
+          const cleanedLine = line.replace(/^[%|•\-\*§¶`^~]+\s*/g, '').trim();
+          if (cleanedLine.length > 0) {
+            addText(cleanedLine, fontSize, false, 2);
+            addSpace(0.6);
+          }
         }
       }
 
@@ -146,6 +152,7 @@ function buildResumePDFv2(resume, options = {}) {
   // ── EDUCATION ─────────────────────────────
 
   if (resume.education && resume.education.length > 0) {
+    addSpace(2); // Add line space before section
     checkPageBreak(20);
     addText('EDUCATION', headerSize, true);
     addSpace(1.5);
@@ -182,6 +189,7 @@ function buildResumePDFv2(resume, options = {}) {
   // ── SKILLS ────────────────────────────────
 
   if (resume.skills && resume.skills.length > 0) {
+    addSpace(2); // Add line space before section
     checkPageBreak(15);
     addText('SKILLS', headerSize, true);
     addSpace(1.5);
@@ -219,6 +227,7 @@ function buildResumePDFv2(resume, options = {}) {
   // ── PROJECTS ──────────────────────────────
 
   if (resume.projects && resume.projects.length > 0) {
+    addSpace(2); // Add line space before section
     checkPageBreak(15);
     addText('PROJECTS', headerSize, true);
     addSpace(1.5);

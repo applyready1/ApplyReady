@@ -161,15 +161,11 @@ function normalizeResumeText(text) {
   // Remove artifacts
   normalized = normalized.replace(/[%|§¶`^~]/g, '');
 
-  // Fix letter-spacing: only target repeated patterns
-  let iteration = 0;
-  let prevLength;
-  do {
-    prevLength = normalized.length;
-    // Target: 4+ continuous letter-space sequences
-    normalized = normalized.replace(/([a-zA-Z])\s([a-zA-Z])\s([a-zA-Z])\s([a-zA-Z])/g, '$1$2$3$4');
-    iteration++;
-  } while (normalized.length < prevLength && iteration < 10);
+  // Fix letter-spacing: remove all spaced-out letters (pattern like "E x e c u t e d")
+  // This aggressive cleanup fixes PDFs with letter-spacing issues
+  normalized = normalized.replace(/([a-zA-Z])\s([a-zA-Z])\s([a-zA-Z])\s([a-zA-Z])/g, '$1$2$3$4');
+  normalized = normalized.replace(/([a-zA-Z])\s([a-zA-Z])\s([a-zA-Z])/g, '$1$2$3');
+  normalized = normalized.replace(/([a-zA-Z])\s([a-zA-Z])(?=\s[a-zA-Z])/g, '$1$2');
 
   // Normalize whitespace
   normalized = normalized
@@ -414,9 +410,11 @@ function parseExperienceSection(lines, resume) {
       } else if (!currentJob.timeline && isTimelineLine(line)) {
         currentJob.timeline = line;
       } else if (line.length > 0) {
-        // It's a bullet point or description
-        const cleaned = line.replace(/^[•\-\*]\s*/, '').trim();
-        if (cleaned) currentJob.bullets.push(cleaned);
+        // It's a description line - clean all bullet artifacts including %|, •, -, *
+        const cleaned = line.replace(/^[%|•\-\*§¶`^~][\s\w]*/g, '').replace(/^[%|•\-\*§¶`^~]\s*/g, '').trim();
+        if (cleaned && cleaned.length > 0) {
+          currentJob.bullets.push(cleaned);
+        }
       }
     }
   }
@@ -425,13 +423,15 @@ function parseExperienceSection(lines, resume) {
     jobs.push(currentJob);
   }
 
-  // Convert jobs to experience components
+  // Convert jobs to experience components - join without bullet points
   for (const job of jobs) {
+    // Create description without bullet characters
+    const description = job.bullets.join('\n');
     const exp = createExperience(
       job.company,
       job.title,
       job.timeline,
-      job.bullets.join('\n')
+      description
     );
     addExperience(resume, exp);
   }
@@ -496,12 +496,15 @@ function parseEducationSection(lines, resume) {
         continue;
       }
 
-      // Otherwise treat as description
+      // Otherwise treat as description (clean bullets)
       if (trimmed.length > 2) {
-        if (currentEdu.description) {
-          currentEdu.description += '\n' + trimmed;
-        } else {
-          currentEdu.description = trimmed;
+        const cleaned = trimmed.replace(/^[•\-\*]\s*/, '').trim();
+        if (cleaned) {
+          if (currentEdu.description) {
+            currentEdu.description += '\n' + cleaned;
+          } else {
+            currentEdu.description = cleaned;
+          }
         }
       }
     }
@@ -535,10 +538,14 @@ function parseProjectsSection(lines, resume) {
       }
       currentProject = createProject(line, '');
     } else if (currentProject) {
-      if (!currentProject.description) {
-        currentProject.description = line;
-      } else {
-        currentProject.description += '\n' + line;
+      // Clean bullets from project description
+      const cleaned = line.replace(/^[•\-\*]\s*/, '').trim();
+      if (cleaned) {
+        if (!currentProject.description) {
+          currentProject.description = cleaned;
+        } else {
+          currentProject.description += '\n' + cleaned;
+        }
       }
     }
   }

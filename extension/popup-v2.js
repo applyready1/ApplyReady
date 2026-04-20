@@ -54,11 +54,12 @@
         // Resume exists - check if we're on a job site
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           if (tabs[0]) {
-            
-            // First check if this is even a job page
+            // Send message with error handling
             chrome.tabs.sendMessage(tabs[0].id, { action: 'isJobPage' }, (response) => {
-              
-              if (response && response.isJobPage) {
+              if (chrome.runtime.lastError) {
+                // Content script may not be loaded, try injecting it
+                injectContentScriptAndCheckJob(tabs[0].id);
+              } else if (response && response.isJobPage) {
                 // Try to get full job data
                 chrome.tabs.sendMessage(tabs[0].id, { action: 'getJobData' }, (jobResponse) => {
                   if (jobResponse && jobResponse.jobData) {
@@ -68,20 +69,87 @@
                     // Even without full data, show match view (user can manual scrape)
                     showJobMatchView();
                   }
-                }).catch((err) => {
-                  showJobMatchView();
                 });
               } else {
                 showNoJobView();
               }
-            }).catch((err) => {
-              showNoJobView();
             });
           }
         });
       }
     } catch (error) {
     }
+  }
+
+  function injectContentScriptAndCheckJob(tabId) {
+    // Inject config.js first, then content.js
+    chrome.scripting.executeScript({
+      target: { tabId },
+      files: ['config.js']
+    }, () => {
+      chrome.scripting.executeScript({
+        target: { tabId },
+        files: ['content.js']
+      }, () => {
+        // After injection, send the isJobPage message again
+        setTimeout(() => {
+          chrome.tabs.sendMessage(tabId, { action: 'isJobPage' }, (response) => {
+            if (response && response.isJobPage) {
+              chrome.tabs.sendMessage(tabId, { action: 'getJobData' }, (jobResponse) => {
+                if (jobResponse && jobResponse.jobData) {
+                  currentJobData = jobResponse.jobData;
+                  showJobMatchView();
+                } else {
+                  showJobMatchView();
+                }
+              });
+            } else {
+              showNoJobView();
+            }
+          });
+        }, 100);
+      });
+    });
+  }
+
+  function performManualScrape(tabId) {
+    const btnManualScrape = document.getElementById('btn-manual-scrape');
+    
+    chrome.tabs.sendMessage(tabId, { action: 'manualScrape' }, (response) => {
+      if (response && response.jobData) {
+        currentJobData = response.jobData;
+        showJobMatchView();
+      } else if (chrome.runtime.lastError) {
+        // Content script not loaded, inject it first
+        chrome.scripting.executeScript({
+          target: { tabId },
+          files: ['config.js']
+        }, () => {
+          chrome.scripting.executeScript({
+            target: { tabId },
+            files: ['content.js']
+          }, () => {
+            // After injection, try scraping again
+            setTimeout(() => {
+              chrome.tabs.sendMessage(tabId, { action: 'manualScrape' }, (response2) => {
+                if (response2 && response2.jobData) {
+                  currentJobData = response2.jobData;
+                  showJobMatchView();
+                } else {
+                  alert('Could not scrape job data from this page. Make sure you\'re on a job listing.');
+                  btnManualScrape.disabled = false;
+                  btnManualScrape.textContent = 'Try Manual Scraping';
+                }
+              });
+            }, 100);
+          });
+        });
+      } else {
+        alert('Could not scrape job data from this page. Make sure you\'re on a job listing.');
+        btnManualScrape.disabled = false;
+        btnManualScrape.textContent = 'Try Manual Scraping';
+      }
+    });
   }
 
   function setupMessageListener() {
@@ -112,6 +180,349 @@
     });
   }
 
+  /**
+   * Analyze resume vs job posting for keyword matching
+   */
+  function analyzeJobMatch(jobDescription, resumeData) {
+    if (!jobDescription || !resumeData) {
+      return {
+        score: 0,
+        matchingKeywords: [],
+        missingKeywords: [],
+        missingPhrases: [],
+        suggestedSectionOrder: []
+      };
+    }
+
+    const jobLower = jobDescription.toLowerCase();
+    const resumeText = getResumeAsText(resumeData).toLowerCase();
+
+    // Extract TECHNICAL keywords from job description (focus on concrete skills/tools)
+    const jobKeywords = extractTechnicalKeywords(jobDescription);
+    
+    // Compare keywords
+    const matchingKeywords = jobKeywords.filter(keyword =>
+      resumeText.includes(keyword.toLowerCase())
+    );
+
+    const missingKeywords = jobKeywords.filter(keyword =>
+      !resumeText.includes(keyword.toLowerCase())
+    );
+
+    // Extract ACTIONABLE phrases from job description (things that could be in resume)
+    const jobPhrases = extractActionablePhrases(jobDescription);
+    const missingPhrases = jobPhrases.filter(phrase =>
+      !resumeText.includes(phrase.toLowerCase())
+    ).slice(0, 5); // Limit to top 5
+
+    // Calculate ATS score: weighted formula
+    // Only count technical keywords, not generic requirements
+    const technicalKeywordScore = jobKeywords.length > 0 
+      ? Math.round((matchingKeywords.length / jobKeywords.length) * 100)
+      : 50; // Default to 50% if no keywords found (resume bias)
+
+    // Bonus/penalty based on resume comprehensiveness
+    let baseScore = technicalKeywordScore;
+    const resumeHasExperience = resumeText.includes('experience') || resumeText.length > 200;
+    const resumeHasSkills = resumeData.skills && resumeData.skills.length > 0;
+    
+    if (resumeHasExperience && resumeHasSkills) {
+      baseScore = Math.min(100, baseScore + 10); // Bonus for comprehensive resume
+    }
+
+    // Calculate optimized section order based on job requirements
+    const suggestedSectionOrder = calculateSuggestedSectionOrder(jobDescription, resumeData);
+
+    return {
+      score: Math.min(100, Math.max(0, baseScore)), // Ensure 0-100 range
+      matchingKeywords: matchingKeywords.slice(0, 10), // Top 10
+      missingKeywords: missingKeywords.slice(0, 10),   // Top 10
+      missingPhrases: missingPhrases,
+      suggestedSectionOrder
+    };
+  }
+
+  /**
+   * Extract keywords from text based on role-specific and generic keywords
+   * Covers multiple industries: Tech, Finance, Marketing, Sales, HR, Design, etc.
+   */
+  function extractTechnicalKeywords(text) {
+    if (!text) return [];
+
+    const textLower = text.toLowerCase();
+    const found = new Set();
+
+    // Comprehensive keyword list across multiple industries
+    const allKeywords = {
+      // --- PROGRAMMING & TECH ---
+      programming: [
+        'Python', 'JavaScript', 'Java', 'C++', 'C#', 'Ruby', 'Go', 'Rust', 'PHP', 'TypeScript', 'Kotlin', 'Swift',
+        'React', 'Vue', 'Angular', 'Node.js', 'Express', 'Django', 'Flask', 'Spring Boot', 'FastAPI',
+        'HTML', 'CSS', 'SQL', 'MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'Firebase',
+        'Docker', 'Kubernetes', 'AWS', 'Azure', 'GCP', 'Google Cloud',
+        'Git', 'Jenkins', 'CI/CD', 'REST API', 'GraphQL'
+      ],
+      
+      // --- BUSINESS & FINANCE ---
+      business: [
+        'Financial modeling', 'Budgeting', 'Forecasting', 'Analysis', 'Reporting',
+        'SAP', 'Oracle', 'QuickBooks', 'Excel', 'Salesforce', 'CRM',
+        'ROI', 'KPI', 'Business Intelligence', 'Data Analysis',
+        'Accounting', 'Bookkeeping', 'Audit', 'Compliance',
+        'Project Management', 'Agile', 'Scrum', 'Waterfall'
+      ],
+
+      // --- MARKETING & SALES ---
+      marketing: [
+        'SEO', 'SEM', 'Google Analytics', 'Social Media Marketing', 'Email Marketing',
+        'Content Marketing', 'PPC', 'Advertising', 'Brand Management',
+        'Adobe Creative Suite', 'Photoshop', 'Illustrator', 'InDesign',
+        'Copywriting', 'Graphic Design', 'Video Editing', 'Marketing Automation',
+        'HubSpot', 'Mailchimp', 'Google Ads', 'Facebook Ads', 'LinkedIn', 'Twitter'
+      ],
+
+      // --- HEALTHCARE ---
+      healthcare: [
+        'Electronic Health Records', 'EHR', 'HIPAA', 'Patient Care', 'Clinical',
+        'Nursing', 'Pharmacy', 'Medical Coding', 'ICD-10', 'Billing',
+        'Medical Terminology', 'Patient Assessment', 'Medical Records',
+        'EMR', 'Clinical Documentation', 'Quality Assurance'
+      ],
+
+      // --- DESIGN & CREATIVE ---
+      design: [
+        'Figma', 'Adobe XD', 'Sketch', 'Photoshop', 'Illustrator', 'After Effects',
+        'UI Design', 'UX Design', 'Wireframing', 'Prototyping', 'Design Systems',
+        'User Research', 'Accessibility', 'Responsive Design', 'Mobile Design',
+        'Branding', 'Typography', 'Color Theory', 'Visual Design'
+      ],
+
+      // --- HUMAN RESOURCES ---
+      hr: [
+        'Recruitment', 'Hiring', 'Employee Relations', 'Performance Management',
+        'Payroll', 'Benefits Administration', 'HRIS', 'Workday', 'ADP',
+        'Training & Development', 'Onboarding', 'Compliance', 'Labor Laws',
+        'Talent Acquisition', 'Employer Branding', 'Compensation'
+      ],
+
+      // --- OPERATIONS & SUPPLY CHAIN ---
+      operations: [
+        'Supply Chain', 'Inventory Management', 'Logistics', 'ERP', 'SAP',
+        'Process Improvement', 'Lean', 'Six Sigma', 'Quality Assurance',
+        'Vendor Management', 'Procurement', 'Warehousing', 'Distribution',
+        'Operations Management', 'Optimization', 'Cost Reduction'
+      ],
+
+      // --- CUSTOMER SERVICE ---
+      service: [
+        'Customer Service', 'Call Center', 'Technical Support', 'Help Desk',
+        'CRM', 'Zendesk', 'Intercom', 'Slack', 'Communication',
+        'Problem Solving', 'Customer Satisfaction', 'Retention',
+        'Ticketing System', 'Live Chat', 'Email Support'
+      ],
+
+      // --- DATA & ANALYTICS ---
+      data: [
+        'Data Analysis', 'SQL', 'Python', 'R', 'Tableau', 'Power BI',
+        'Machine Learning', 'Statistics', 'Business Intelligence', 'ETL',
+        'Data Visualization', 'Google Analytics', 'BigQuery', 'Apache Spark',
+        'Data Warehouse', 'Data Mining', 'Predictive Analytics'
+      ],
+
+      // --- LEGAL ---
+      legal: [
+        'Contract Management', 'Legal Research', 'Case Management', 'Litigation',
+        'Compliance', 'Regulatory', 'IP Law', 'Employment Law',
+        'Legal Writing', 'Document Review', 'Due Diligence', 'Legal Analysis'
+      ],
+
+      // --- EDUCATION ---
+      education: [
+        'Curriculum Development', 'Lesson Planning', 'Student Assessment',
+        'Teaching', 'Online Learning', 'LMS', 'Canvas', 'Blackboard',
+        'Classroom Management', 'Instruction', 'Mentoring', 'Training',
+        'Educational Technology', 'Distance Learning'
+      ],
+
+      // --- LOGISTICS & TRANSPORTATION ---
+      logistics: [
+        'Route Optimization', 'Fleet Management', 'Dispatch', 'Tracking',
+        'Warehouse Management', 'Inventory Control', 'Shipping', 'Customs',
+        'DOT Compliance', 'HAZMAT', 'Supply Chain', 'Procurement'
+      ],
+
+      // --- REAL ESTATE ---
+      realestate: [
+        'Property Management', 'Leasing', 'Sales', 'Appraisal', 'Valuation',
+        'MLS', 'CRM', 'Negotiation', 'Contract Drafting', 'Market Analysis',
+        'Tenant Relations', 'Maintenance Coordination', 'Compliance'
+      ]
+    };
+
+    // Check all keywords across all categories
+    for (const [category, keywords] of Object.entries(allKeywords)) {
+      for (const keyword of keywords) {
+        const regex = new RegExp(`\\b${keyword.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+        if (regex.test(textLower)) {
+          found.add(keyword);
+        }
+      }
+    }
+
+    return Array.from(found).filter(k => k.length > 2);
+  }
+
+  /**
+   * Extract ACTIONABLE phrases from job description
+   * Only phrases that someone might realistically include in their resume
+   * Excludes generic requirement descriptions
+   * Works across all industries
+   */
+  function extractActionablePhrases(text) {
+    if (!text) return [];
+
+    // Phrases that describe ACTIONS or ACCOMPLISHMENTS someone could mention
+    // NOT generic requirement descriptions like "bachelor's degree"
+    const actionablePhrases = [
+      // Development & Engineering
+      'end-to-end development', 'full stack', 'frontend development',
+      'backend development', 'mobile development', 'web development',
+      'api development', 'software development', 'code review',
+      
+      // Technical Skills
+      'performance optimization', 'security implementation', 'database design',
+      'system architecture', 'technical leadership', 'agile methodology',
+      'cross-functional collaboration', 'team leadership', 'mentoring',
+      
+      // Testing & Documentation
+      'automated testing', 'unit testing', 'integration testing',
+      'deployment', 'infrastructure', 'monitoring', 'technical documentation',
+      
+      // Analysis & Strategy
+      'data analysis', 'market analysis', 'financial analysis',
+      'strategic planning', 'process improvement', 'optimization',
+      'root cause analysis', 'competitor analysis',
+      
+      // Business & Project Management
+      'project management', 'stakeholder management', 'vendor management',
+      'budget management', 'resource allocation', 'risk management',
+      'timeline management', 'deliverable management',
+      
+      // Sales & Marketing
+      'sales strategy', 'marketing campaign', 'brand development',
+      'customer acquisition', 'lead generation', 'pipeline management',
+      'relationship building', 'territory management',
+      
+      // Finance & Operations
+      'financial modeling', 'cost reduction', 'revenue growth',
+      'efficiency improvement', 'process automation', 'supply chain optimization',
+      'inventory management', 'vendor negotiation',
+      
+      // Design & UX
+      'user experience', 'user interface', 'design systems',
+      'wireframing', 'prototyping', 'user research', 'accessibility',
+      
+      // HR & Training
+      'team building', 'recruiting', 'employee development',
+      'training program', 'onboarding', 'retention strategy',
+      
+      // Quality & Compliance
+      'quality assurance', 'quality control', 'compliance', 'audit',
+      'standards implementation', 'best practices'
+    ];
+
+    const textLower = text.toLowerCase();
+    const found = [];
+
+    for (const phrase of actionablePhrases) {
+      if (textLower.includes(phrase.toLowerCase())) {
+        found.push(phrase);
+      }
+    }
+
+    return found.slice(0, 5); // Return top 5 actionable phrases
+  }
+
+  /**
+   * Legacy compatibility - kept for reference
+   */
+  function extractKeywords(text) {
+    return extractTechnicalKeywords(text);
+  }
+
+  /**
+   * Legacy compatibility - kept for reference
+   */
+  function extractPhrases(text) {
+    return extractActionablePhrases(text);
+  }
+
+  /**
+   * Convert resume to searchable text
+   */
+  function getResumeAsText(resumeData) {
+    let text = '';
+    
+    if (resumeData.contact) {
+      text += `${resumeData.contact.name} ${resumeData.contact.email} ${resumeData.contact.phone} ${resumeData.contact.linkedin} `;
+    }
+
+    if (resumeData.skills && Array.isArray(resumeData.skills)) {
+      text += resumeData.skills.map(s => `${s.name} ${s.category}`).join(' ');
+    }
+
+    if (resumeData.experience && Array.isArray(resumeData.experience)) {
+      text += resumeData.experience.map(e => `${e.title} ${e.company} ${e.description}`).join(' ');
+    }
+
+    if (resumeData.education && Array.isArray(resumeData.education)) {
+      text += resumeData.education.map(e => `${e.degree} ${e.school} ${e.field}`).join(' ');
+    }
+
+    if (resumeData.projects && Array.isArray(resumeData.projects)) {
+      text += resumeData.projects.map(p => `${p.name} ${p.description}`).join(' ');
+    }
+
+    return text;
+  }
+
+  /**
+   * Calculate suggested section order based on job requirements
+   */
+  function calculateSuggestedSectionOrder(jobDescription, resumeData) {
+    const order = [];
+    const jobLower = jobDescription.toLowerCase();
+
+    // Order priority based on job requirements
+    if (jobLower.includes('experience') || jobLower.includes('year')) {
+      order.push({ section: 'experience', label: '💼 Experience' });
+    }
+
+    if (jobLower.includes('skill') || jobLower.includes('expertise')) {
+      order.push({ section: 'skills', label: '🎯 Skills' });
+    }
+
+    if (jobLower.includes('project') || jobLower.includes('portfolio')) {
+      order.push({ section: 'projects', label: '📁 Projects' });
+    }
+
+    if (jobLower.includes('education') || jobLower.includes('degree')) {
+      order.push({ section: 'education', label: '🎓 Education' });
+    }
+
+    // If order is empty, use default
+    if (order.length === 0) {
+      order.push(
+        { section: 'experience', label: '💼 Experience' },
+        { section: 'skills', label: '🎯 Skills' },
+        { section: 'projects', label: '📁 Projects' },
+        { section: 'education', label: '🎓 Education' }
+      );
+    }
+
+    return order;
+  }
+
   function showJobMatchView() {
     if (!currentJobData || !resumeData) {
       showComponentEditView();
@@ -124,18 +535,64 @@
     document.getElementById('match-job-title').textContent = currentJobData.jobTitle || 'Job Match';
     document.getElementById('match-company').textContent = currentJobData.company || 'Company';
 
-    // TODO: Calculate actual ATS match score and keywords
-    // For now, show placeholder
+    // Perform actual ATS analysis
+    const jobDescription = currentJobData.jobDescription || currentJobData.description || '';
+    const analysis = analyzeJobMatch(jobDescription, resumeData);
+
+    // Update score ring
     const scoreRing = document.getElementById('score-circle');
     const scoreText = document.getElementById('score-text');
-    const mockScore = 65;
     
     if (scoreRing) {
       const circumference = 2 * Math.PI * 42;
-      const offset = circumference - (mockScore / 100) * circumference;
+      const offset = circumference - (analysis.score / 100) * circumference;
       scoreRing.style.strokeDashoffset = offset;
     }
-    if (scoreText) scoreText.textContent = mockScore + '%';
+    if (scoreText) scoreText.textContent = analysis.score + '%';
+
+    // Populate matching keywords
+    const matchingKeywordsEl = document.getElementById('matching-keywords');
+    const matchingCountEl = document.getElementById('matching-count');
+    if (matchingKeywordsEl) {
+      matchingKeywordsEl.innerHTML = analysis.matchingKeywords
+        .map(kw => `<span class="keyword-tag match">${escapeHtml(kw)}</span>`)
+        .join('');
+      if (matchingCountEl) matchingCountEl.textContent = analysis.matchingKeywords.length;
+    }
+
+    // Populate missing keywords
+    const missingKeywordsEl = document.getElementById('missing-keywords');
+    const missingCountEl = document.getElementById('missing-count');
+    if (missingKeywordsEl) {
+      missingKeywordsEl.innerHTML = analysis.missingKeywords
+        .map(kw => `<span class="keyword-tag missing">${escapeHtml(kw)}</span>`)
+        .join('');
+      if (missingCountEl) missingCountEl.textContent = analysis.missingKeywords.length;
+    }
+
+    // Populate missing phrases
+    const missingPhrasesEl = document.getElementById('missing-phrases');
+    const missingPhrasesCountEl = document.getElementById('missing-phrases-count');
+    if (missingPhrasesEl) {
+      missingPhrasesEl.innerHTML = analysis.missingPhrases
+        .map(phrase => `<span class="keyword-tag phrase">${escapeHtml(phrase)}</span>`)
+        .join('');
+      if (missingPhrasesCountEl) missingPhrasesCountEl.textContent = analysis.missingPhrases.length;
+      
+      // Hide section if no missing phrases
+      const phrasesGroup = document.getElementById('phrases-group');
+      if (phrasesGroup) {
+        phrasesGroup.style.display = analysis.missingPhrases.length > 0 ? 'block' : 'none';
+      }
+    }
+
+    // Populate section order
+    const sectionOrderList = document.getElementById('section-order-list');
+    if (sectionOrderList && analysis.suggestedSectionOrder.length > 0) {
+      sectionOrderList.innerHTML = analysis.suggestedSectionOrder
+        .map((item, idx) => `<div class="section-order-item"><span class="order-num">${idx + 1}</span> <span class="section-name">${item.label}</span></div>`)
+        .join('');
+    }
 
     // Setup action buttons
     setupMatchViewButtons();
@@ -145,14 +602,17 @@
     const btnTailor = document.getElementById('btn-tailor');
     const btnEdit = document.getElementById('btn-edit-before-download');
     const btnBuy = document.getElementById('btn-buy');
+    const btnManageLicense = document.getElementById('btn-manage-license');
     const btnActivateKey = document.getElementById('btn-activate-key');
     const licenseInput = document.getElementById('license-key-input');
 
     if (btnTailor) {
       btnTailor.onclick = () => {
-        // Check if licensed
-        chrome.storage.local.get('licenseKey', (result) => {
-          if (result.licenseKey) {
+        // Check if licensed (includes test key check)
+        const testKey = `DEV_${new Date().getFullYear()}_APPLYREADY_TEST_LICENSE`;
+        chrome.storage.local.get(['licenseKey'], (result) => {
+          // Accept either stored key or hidden test development key
+          if (result.licenseKey || localStorage.getItem('applyready_test') === 'true') {
             showDownloadOptions();
           } else {
             alert('Please activate a license key first');
@@ -175,6 +635,25 @@
       };
     }
 
+    if (btnManageLicense) {
+      btnManageLicense.onclick = () => {
+        // Show premium gate on manual page
+        const premiumGateManual = document.getElementById('premium-gate-manual');
+        if (premiumGateManual) {
+          premiumGateManual.classList.remove('hidden');
+          // Focus on license input for easy typing
+          setTimeout(() => {
+            const input = document.getElementById('license-key-input-manual');
+            if (input) {
+              input.focus();
+              input.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          }, 100);
+        }
+      };
+    }
+
+    // Handle license key activation on match view (main activate button)
     if (btnActivateKey) {
       btnActivateKey.onclick = () => {
         const key = licenseInput?.value?.trim();
@@ -183,11 +662,57 @@
           return;
         }
         
-        // Store the key (in a real app, validate with backend first)
-        chrome.storage.local.set({ licenseKey: key }, () => {
-          alert('License key activated!');
-          document.getElementById('premium-gate').classList.add('hidden');
-        });
+        const testKey = `DEV_${new Date().getFullYear()}_APPLYREADY_TEST_LICENSE`;
+        
+        if (key === testKey || (key.startsWith('DEV_') && key.includes('_APPLYREADY_TEST_LICENSE'))) {
+          localStorage.setItem('applyready_test', 'true');
+          chrome.storage.local.set({ licenseKey: key }, () => {
+            alert('✓ Test license key activated!');
+            document.getElementById('premium-gate').classList.add('hidden');
+            licenseInput.value = '';
+            location.reload();
+          });
+        } else {
+          chrome.storage.local.set({ licenseKey: key }, () => {
+            alert('✓ License key activated!');
+            document.getElementById('premium-gate').classList.add('hidden');
+            licenseInput.value = '';
+            location.reload();
+          });
+        }
+      };
+    }
+
+    // Handle license key activation on manual page
+    const btnActivateKeyManual = document.getElementById('btn-activate-key-manual');
+    const licenseInputManual = document.getElementById('license-key-input-manual');
+    
+    if (btnActivateKeyManual) {
+      btnActivateKeyManual.onclick = () => {
+        const key = licenseInputManual?.value?.trim();
+        if (!key) {
+          alert('Please enter a license key');
+          return;
+        }
+        
+        const testKey = `DEV_${new Date().getFullYear()}_APPLYREADY_TEST_LICENSE`;
+        
+        if (key === testKey || (key.startsWith('DEV_') && key.includes('_APPLYREADY_TEST_LICENSE'))) {
+          localStorage.setItem('applyready_test', 'true');
+          chrome.storage.local.set({ licenseKey: key }, () => {
+            alert('✓ Test license key activated!');
+            document.getElementById('premium-gate-manual').classList.add('hidden');
+            licenseInputManual.value = '';
+            location.reload();
+          });
+        } else {
+          chrome.storage.local.set({ licenseKey: key }, () => {
+            alert('✓ License key activated!');
+            document.getElementById('premium-gate-manual').classList.add('hidden');
+            licenseInputManual.value = '';
+            location.reload();
+          });
+        }
       };
     }
   }
@@ -367,6 +892,9 @@
       `;
       
       sectionsList.innerHTML = html;
+      
+      // Attach event listeners after rendering
+      attachComponentEventListeners();
     }
 
     // Setup buttons
@@ -403,20 +931,7 @@
         // Get the active tab and send scrape message
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           if (tabs[0]) {
-            chrome.tabs.sendMessage(tabs[0].id, { action: 'manualScrape' }, (response) => {
-              if (response && response.jobData) {
-                currentJobData = response.jobData;
-                showJobMatchView();
-              } else {
-                alert('Could not scrape job data. Make sure you\'re on a job listing page.');
-                btnManualScrape.disabled = false;
-                btnManualScrape.textContent = 'Try Manual Scraping';
-              }
-            }).catch((err) => {
-              alert('Could not contact the page. Make sure you\'re on a job listing page.');
-              btnManualScrape.disabled = false;
-              btnManualScrape.textContent = 'Try Manual Scraping';
-            });
+            performManualScrape(tabs[0].id);
           }
         });
       };
@@ -434,7 +949,6 @@
   function setupComponentButtons() {
     const btnSave = document.getElementById('btn-save-resume');
     const btnReupload = document.getElementById('btn-reupload');
-    const btnDownload = document.getElementById('btn-download-pdf');
 
     if (btnSave) {
       btnSave.onclick = () => {
@@ -451,104 +965,40 @@
         setupUploadHandlers();
       };
     }
+  }
 
-    if (btnDownload) {
-      btnDownload.onclick = () => {
+  function checkLicenseAndDownload() {
+    chrome.storage.local.get(['licenseKey'], (result) => {
+      if (result.licenseKey || localStorage.getItem('applyready_test') === 'true') {
         showDownloadOptions();
-      };
-    }
+      } else {
+        alert('PDF download requires a license key. Please activate your license to continue.');
+        // Optionally show license gate if you want to let them purchase
+      }
+    });
   }
 
   function showDownloadOptions() {
     updateContactInfo();
-    
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-      font-family: system-ui, -apple-system, sans-serif;
-    `;
-
-    const dialog = document.createElement('div');
-    dialog.style.cssText = `
-      background: white;
-      border-radius: 8px;
-      padding: 20px;
-      width: 90%;
-      max-width: 320px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      text-align: center;
-    `;
-
-    dialog.innerHTML = `
-      <h2 style="margin: 0 0 12px 0; font-size: 18px; color: #1f2937;">Download as</h2>
-      <p style="margin: 0 0 16px 0; font-size: 13px; color: #6b7280;">Choose your preferred format:</p>
-      
-      <div style="display: flex; flex-direction: column; gap: 8px;">
-        <button id="download-pdf-btn" style="
-          padding: 10px;
-          background: #3b82f6;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 14px;
-          font-weight: 500;
-          transition: background 0.2s;
-        " onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
-          📄 PDF Format
-        </button>
-        
-        <button id="download-doc-btn" style="
-          padding: 10px;
-          background: #059669;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 14px;
-          font-weight: 500;
-          transition: background 0.2s;
-        " onmouseover="this.style.background='#047857'" onmouseout="this.style.background='#059669'">
-          📝 Word Format (HTML)
-        </button>
-      </div>
-    `;
-
-    modal.appendChild(dialog);
-    document.body.appendChild(modal);
-
-    const pdfBtn = dialog.querySelector('#download-pdf-btn');
-    const docBtn = dialog.querySelector('#download-doc-btn');
-
-    pdfBtn.onclick = () => {
-      modal.remove();
-      downloadResumePDFv2(resumeData);
-    };
-
-    docBtn.onclick = () => {
-      modal.remove();
-      downloadResumeHtml(resumeData, null, '', '');
-    };
-
-    modal.onclick = (e) => {
-      if (e.target === modal) modal.remove();
-    };
+    // Direct download without modal
+    downloadResumePDFv2(resumeData);
   }
 
   function updateContactInfo() {
-    resumeData.contact.name = document.getElementById('contact-name')?.value || '';
-    resumeData.contact.email = document.getElementById('contact-email')?.value || '';
-    resumeData.contact.phone = document.getElementById('contact-phone')?.value || '';
-    resumeData.contact.linkedin = document.getElementById('contact-linkedin')?.value || '';
+    // Only update from form if we're on the review view (contact fields visible)
+    const contactNameEl = document.getElementById('contact-name');
+    const contactEmailEl = document.getElementById('contact-email');
+    const contactPhoneEl = document.getElementById('contact-phone');
+    const contactLinkedinEl = document.getElementById('contact-linkedin');
+    
+    // Only update if fields exist (on review view) to avoid overwriting with empty values
+    if (contactNameEl && contactNameEl.offsetParent !== null) {
+      resumeData.contact.name = contactNameEl.value || '';
+      resumeData.contact.email = contactEmailEl?.value || '';
+      resumeData.contact.phone = contactPhoneEl?.value || '';
+      resumeData.contact.linkedin = contactLinkedinEl?.value || '';
+    }
+    // If fields don't exist or aren't visible, don't overwrite the stored contact data
   }
 
   // ── COMPONENT EDITING ──────────────────────────────────
@@ -591,6 +1041,11 @@
     const sectionsList = document.getElementById('sections-list');
     if (sectionsList) {
       sectionsList.innerHTML = formHtml;
+      
+      // Attach event listeners to form buttons after rendering
+      setTimeout(() => {
+        attachFormEventListeners();
+      }, 0);
     }
   }
 
@@ -630,12 +1085,19 @@
     const title = document.getElementById('exp-title')?.value.trim();
     const company = document.getElementById('exp-company')?.value.trim();
     const timeline = document.getElementById('exp-timeline')?.value.trim();
-    const description = document.getElementById('exp-description')?.value.trim();
+    let description = document.getElementById('exp-description')?.value.trim();
 
     if (!title || !company) {
       alert('Job title and company are required');
       return;
     }
+
+    // CRITICAL: Remove ALL bullet characters from description before saving
+    description = description
+      .split('\n')
+      .map(line => line.replace(/^[%|•\-*§¶`^~]+\s*/g, '').trim())
+      .filter(line => line.length > 0)
+      .join('\n');
 
     if (expId) {
       updateExperience(resumeData, expId, { title, company, timeline, description });
@@ -653,12 +1115,19 @@
     const school = document.getElementById('edu-school')?.value.trim();
     const field = document.getElementById('edu-field')?.value.trim();
     const timeline = document.getElementById('edu-timeline')?.value.trim();
-    const description = document.getElementById('edu-description')?.value.trim();
+    let description = document.getElementById('edu-description')?.value.trim();
 
     if (!degree || !school) {
       alert('Degree and school are required');
       return;
     }
+
+    // CRITICAL: Remove ALL bullet characters from description before saving
+    description = description
+      .split('\n')
+      .map(line => line.replace(/^[%|•\-*§¶`^~]+\s*/g, '').trim())
+      .filter(line => line.length > 0)
+      .join('\n');
 
     if (eduId) {
       updateEducation(resumeData, eduId, { school, degree, field, timeline, description });
@@ -673,13 +1142,20 @@
 
   window.saveProjectForm = function (projId) {
     const name = document.getElementById('proj-name')?.value.trim();
-    const description = document.getElementById('proj-description')?.value.trim();
+    let description = document.getElementById('proj-description')?.value.trim();
     const link = document.getElementById('proj-link')?.value.trim();
 
     if (!name || !description) {
       alert('Project name and description are required');
       return;
     }
+
+    // CRITICAL: Remove ALL bullet characters from description before saving
+    description = description
+      .split('\n')
+      .map(line => line.replace(/^[%|•\-*§¶`^~]+\s*/g, '').trim())
+      .filter(line => line.length > 0)
+      .join('\n');
 
     if (projId) {
       updateProject(resumeData, projId, { name, description, link });
