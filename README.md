@@ -1,72 +1,59 @@
-﻿# ApplyReady — Tailor Your Resume to Any Job in Seconds
+# ApplyReady
 
-A web platform that instantly matches your resume against any job listing's keywords, reorders sections by relevance, and generates a tailored ATS-friendly PDF.
+ApplyReady is a website-first resume workspace. A user uploads a resume PDF, pastes a job description, gets an ATS match score, edits parsed resume sections, quick-adds missing keywords, and downloads a clean ATS-friendly PDF.
 
-## How It Works
+## Current Scope
 
-1. **Sign Up & Upload** your resume PDF (parsed and securely stored in your Supabase account).
-2. **Paste** any Job Description into the platform.
-3. **See** your ATS match score, matching keywords, and missing keywords instantly.
-4. **Edit** your resume sections with keyword guidance
-5. **Download** a tailored, ATS-optimized resume PDF ($2.99/month Pro subscription).
+- Website model only. No browser extension flow remains in the app.
+- No authentication, Supabase persistence, subscription checks, or Pro labeling yet.
+- Resume data and pasted job descriptions are temporarily persisted in browser local storage.
+- PDF parsing and PDF generation run client-side through the files in `public/libs`.
 
-## Architecture
+## App Flow
 
-```
-applyready/              Next.js Web Application (deployed on Vercel)
-  app/
-    layout.js            Root layout with metadata
-    page.js              Landing page
-    dashboard/           Main app interface (Upload, Paste JD, Match)
-    api/
-      webhook/           LemonSqueezy webhook handler
-  styles/
-    globals.css          Global CSS reset
-  lib/
-    supabase.js          Supabase client initialization
-    resume-parser-v2.js  PDF text extraction + heuristic section detection
-    pdf-builder-v2.js    jsPDF-based tailored resume PDF generator
-    skill-extractor.js   TF-based keyword extraction + matching engine
-  package.json           Next.js dependencies
-  next.config.js         Next.js configuration
+1. Upload a base resume PDF or enter resume data manually.
+2. Paste a job description into the workspace.
+3. Review the ATS score, matched keywords, missing keywords, missing phrases, and suggested section order.
+4. Edit contact, summary, skills, experience, education, and projects.
+5. Download an ATS-friendly PDF.
 
+## Project Structure
+
+```text
+app/
+  components/
+    ApplyReadyWorkspace.js   Main website workspace
+  dashboard/page.js          Backward-compatible route to the workspace
+  globals.css                Global UI styles
+  layout.js                  Metadata and root document shell
+  page.js                    Home route
+  privacy/page.js            Current privacy policy
+lib/
+  matcher.js                 JD/resume matching and section ordering
+  pdf-builder-v2.js          Client-side jsPDF resume export
+  resume-data.js             Resume data factories
+  resume-parser-v2.js        Client-side PDF.js resume parser
 public/libs/
-  jspdf.umd.min.js       jsPDF library (client-side PDF generation)
-  pdf.min.mjs            PDF.js library (PDF text extraction)
-  pdf.worker.min.mjs     PDF.js web worker
+  jspdf.umd.min.js
+  pdf.min.mjs
+  pdf.worker.min.mjs
 ```
 
+## Planned Integrations
 
+- Supabase Auth for accounts.
+- Supabase database storage for parsed resume data linked to users.
+- LemonSqueezy checkout and webhook handling for monthly subscription state.
 
-## Tech Stack
+## Development
 
-- **Next.js** — Full-stack web framework (App Router)
-- **Supabase** — PostgreSQL Database & Authentication
-- **LemonSqueezy** — Subscriptions & Webhooks
-- **PDF.js** — Client-side PDF text extraction
-- **jsPDF** — Client-side PDF generation
+```bash
+npm install
+npm run dev
+```
 
-## Pricing
+Open `http://localhost:3000`.
 
-| Feature | Free | Paid (one-time) |
-|---------|------|---------------|
-| ATS Match Score | ✓ | ✓ |
-| Missing Keywords | ✓ | ✓ |
-| Section Reordering Preview | ✓ | ✓ |
-| Edit with Keyword Guidance | ✓ | ✓ |
-| Download Tailored PDF | ✘ | ✓ Unlimited |
+## Notes
 
-## Setup for Development
-
-1. Install dependencies: `npm install`
-2. Set up environment variables (`.env.local`) for Supabase and LemonSqueezy
-3. Run development server: `npm run dev`
-4. Open `http://localhost:3000` in browser
-5. Test the signup, upload, and PDF generation flows
-
-## Pre-Production Checklist
-
-- [ ] Set up Supabase Auth and Database schema
-- [ ] Create LemonSqueezy webhook endpoint in Next.js (`/api/webhook`)
-- [ ] Migrate vanilla JS UI to React components
-- [ ] Integrate `pdf-builder-v2.js` and `resume-parser-v2.js` into Next.js
+This repository currently expects `npm`/Node to be available locally. The current shell used for this edit did not have `npm` or `node` on `PATH`, so build verification could not be run here.
