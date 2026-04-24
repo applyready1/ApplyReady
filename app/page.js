@@ -69,7 +69,7 @@ export default function LandingPage() {
       {/* CTA */}
       <section style={{ textAlign: 'center', marginBottom: '32px' }}>
         <a
-          href="/signup"
+          href="/dashboard"
           style={{
             display: 'inline-block',
             background: '#3b82f6',

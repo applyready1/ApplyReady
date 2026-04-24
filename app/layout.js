@@ -19,6 +19,14 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <script src="/libs/jspdf.umd.min.js" async></script>
+        <script type="module" dangerouslySetInnerHTML={{ __html: `
+          import * as pdfjsLib from '/libs/pdf.min.mjs';
+          window.pdfjsLib = pdfjsLib;
+          pdfjsLib.GlobalWorkerOptions.workerSrc = '/libs/pdf.worker.min.mjs';
+        `}}></script>
+      </head>
       <body>{children}</body>
     </html>
   );
