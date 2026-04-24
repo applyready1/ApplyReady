@@ -6,7 +6,7 @@ ApplyReady is a website-first resume workspace. A user uploads a resume PDF, pas
 
 - Website model only. No browser extension flow remains in the app.
 - No authentication, Supabase persistence, subscription checks, or Pro labeling yet.
-- Resume data and pasted job descriptions are temporarily persisted in browser local storage.
+- Resume data and pasted job descriptions are temporarily persisted in browser session storage, so they reset when the tab is closed.
 - PDF parsing and PDF generation run client-side through the files in `public/libs`.
 
 ## App Flow

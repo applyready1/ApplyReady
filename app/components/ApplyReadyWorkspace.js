@@ -116,8 +116,11 @@ export default function ApplyReadyWorkspace() {
 
   useEffect(() => {
     try {
-      const storedResume = window.localStorage.getItem(RESUME_STORAGE_KEY);
-      const storedJd = window.localStorage.getItem(JD_STORAGE_KEY);
+      window.localStorage.removeItem(RESUME_STORAGE_KEY);
+      window.localStorage.removeItem(JD_STORAGE_KEY);
+
+      const storedResume = window.sessionStorage.getItem(RESUME_STORAGE_KEY);
+      const storedJd = window.sessionStorage.getItem(JD_STORAGE_KEY);
 
       if (storedResume) {
         setResumeData(normalizeResumeData(JSON.parse(storedResume)));
@@ -134,12 +137,12 @@ export default function ApplyReadyWorkspace() {
 
   useEffect(() => {
     if (!hydrated) return;
-    window.localStorage.setItem(RESUME_STORAGE_KEY, JSON.stringify(resumeData));
+    window.sessionStorage.setItem(RESUME_STORAGE_KEY, JSON.stringify(resumeData));
   }, [hydrated, resumeData]);
 
   useEffect(() => {
     if (!hydrated) return;
-    window.localStorage.setItem(JD_STORAGE_KEY, jobDescription);
+    window.sessionStorage.setItem(JD_STORAGE_KEY, jobDescription);
   }, [hydrated, jobDescription]);
 
   const hasResume = useMemo(() => resumeHasContent(resumeData), [resumeData]);
@@ -225,7 +228,7 @@ export default function ApplyReadyWorkspace() {
       const parsed = await parseResumePDFv2(buffer);
       setResumeData(normalizeResumeData(parsed));
       setActiveSection("contact");
-      setMessage("Resume parsed and saved locally.");
+      setMessage("Resume parsed and saved for this tab.");
     } catch (parseError) {
       setError(parseError.message || "Resume parsing failed.");
     } finally {
@@ -257,9 +260,13 @@ export default function ApplyReadyWorkspace() {
   }
 
   function clearWorkspace() {
-    const shouldClear = window.confirm("Clear saved resume and job description from this browser?");
+    const shouldClear = window.confirm("Clear saved resume and job description from this tab?");
     if (!shouldClear) return;
 
+    window.sessionStorage.removeItem(RESUME_STORAGE_KEY);
+    window.sessionStorage.removeItem(JD_STORAGE_KEY);
+    window.localStorage.removeItem(RESUME_STORAGE_KEY);
+    window.localStorage.removeItem(JD_STORAGE_KEY);
     setResumeData(createEmptyResume());
     setJobDescription("");
     setActiveSection("contact");
@@ -303,12 +310,12 @@ export default function ApplyReadyWorkspace() {
               <p className="eyebrow">Resume profile</p>
               <h2>Base resume</h2>
             </div>
-            <span className="status-pill">{hydrated ? "Saved locally" : "Loading"}</span>
+            <span className="status-pill">{hydrated ? "Saved for this tab" : "Loading"}</span>
           </div>
 
           <button className="dropzone" type="button" onClick={() => fileInputRef.current?.click()}>
             <span className="dropzone-title">{isParsing ? "Parsing resume" : "Upload PDF resume"}</span>
-            <span className="dropzone-detail">PDF only. Parsed sections stay in this browser for now.</span>
+            <span className="dropzone-detail">PDF only. Parsed sections reset when this tab is closed.</span>
           </button>
           <input
             ref={fileInputRef}

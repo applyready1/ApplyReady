@@ -3,12 +3,12 @@ export default function PrivacyPolicy() {
     <main className="policy-page">
       <a className="policy-back" href="/">Back to ApplyReady</a>
       <h1>Privacy Policy</h1>
-      <p className="policy-date">Last updated: April 24, 2026</p>
+      <p className="policy-date">Last updated: April 25, 2026</p>
 
       <p>
         ApplyReady is a resume and job description matching workspace. In the current website build,
-        uploaded resume PDFs are parsed in the browser, and the parsed resume data is saved in this
-        browser's local storage so the workspace can restore it on return visits.
+        uploaded resume PDFs are parsed in the browser, and the parsed resume data is saved in this tab's
+        session storage. It resets when the tab is closed.
       </p>
 
       <h2>Data Stored Today</h2>
