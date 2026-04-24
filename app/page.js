@@ -1,14 +1,14 @@
 ﻿/**
  * page.js — ApplyReady Landing Page
  * 
- * Public-facing landing page for the Chrome extension.
+ * Public-facing landing page for the web platform.
  * Product description, feature highlights, pricing,
- * and Chrome Web Store install button.
+ * and sign-up button.
  * 
  * Dependencies: constants.js (PRICE)
  */
 
-import { PRICE } from './constants';
+import { SUBSCRIPTION_DURATION } from './constants';
 
 export default function LandingPage() {
   return (
@@ -17,21 +17,21 @@ export default function LandingPage() {
         📄 ApplyReady
       </h1>
       <p style={{ fontSize: '1.25rem', color: '#6b7280', marginBottom: '32px' }}>
-        Tailor your resume to any job listing in seconds. Free ATS matching. {PRICE} one-time for PDF download.
+        Tailor your resume to any job listing in seconds. Free ATS matching. $2.99/month for unlimited PDF downloads.
       </p>
 
       {/* Hero Section */}
       <section style={{ background: '#eff6ff', borderRadius: '12px', padding: '32px', marginBottom: '32px' }}>
         <h2 style={{ marginBottom: '16px' }}>How It Works</h2>
         <ol style={{ lineHeight: '2', paddingLeft: '20px' }}>
-          <li>Upload your resume PDF (stays in your browser — we never see it)</li>
-          <li>Browse to any job listing on any site — ApplyReady intelligently detects job descriptions</li>
-          <li>See your ATS match score and missing keywords instantly</li>
+          <li>Sign up and securely upload your base resume PDF.</li>
+          <li>Paste any Job Description into the analyzer.</li>
+          <li>See your ATS match score and missing keywords instantly.</li>
           <li>Edit your sections with keyword guidance</li>
           <li>Download a tailored, ATS-optimized resume PDF</li>
         </ol>
         <p style={{ marginTop: '12px', fontSize: '13px', color: '#059669' }}>
-          💡 Works on LinkedIn, Indeed, Glassdoor, Lever, Greenhouse, and 100+ other job boards. Not detecting? Try our manual scraping feature.
+          💡 Tailor your resume perfectly for any role in seconds, entirely from your browser.
         </p>
       </section>
 
@@ -40,28 +40,28 @@ export default function LandingPage() {
         <h2 style={{ marginBottom: '16px' }}>Why ApplyReady?</h2>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
-            <strong>✅ 100% Private</strong>
-            <p style={{ color: '#6b7280', fontSize: '14px' }}>Your resume never leaves your browser. Zero data collection.</p>
+            <strong>✅ Secure Cloud Storage</strong>
+            <p style={{ color: '#6b7280', fontSize: '14px' }}>Log in from anywhere. Your parsed resume data is safely backed up in your account.</p>
           </div>
           <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
             <strong>✅ Instant Matching</strong>
             <p style={{ color: '#6b7280', fontSize: '14px' }}>ATS keyword score in under 1 second. Free, unlimited scans.</p>
           </div>
           <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
-            <strong>🌐 Universal Detection</strong>
-            <p style={{ color: '#6b7280', fontSize: '14px' }}>Works on 100+ job boards. Intelligently detects job listings by URL keywords.</p>
+            <strong>🌐 Universal Paste</strong>
+            <p style={{ color: '#6b7280', fontSize: '14px' }}>No extensions needed. Just copy the job description from any site and paste it.</p>
           </div>
           <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
             <strong>📋 Smart Reordering</strong>
             <p style={{ color: '#6b7280', fontSize: '14px' }}>Sections auto-sorted by relevance. Most important skills first.</p>
           </div>
           <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
-            <strong>🔧 Manual Scraping</strong>
-            <p style={{ color: '#6b7280', fontSize: '14px' }}>Fallback option to manually extract job descriptions if auto-detection fails.</p>
+            <strong>⚡ Cross-Device Access</strong>
+            <p style={{ color: '#6b7280', fontSize: '14px' }}>Access your tailored resumes from your laptop, tablet, or phone.</p>
           </div>
           <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
-            <strong>💰 {PRICE} Once, Yours Forever</strong>
-            <p style={{ color: '#6b7280', fontSize: '14px' }}>No subscription. No credits. One payment, unlimited use.</p>
+            <strong>💰 $2.99/month</strong>
+            <p style={{ color: '#6b7280', fontSize: '14px' }}>Monthly subscription. No auto renewal. {SUBSCRIPTION_DURATION} license period.</p>
           </div>
         </div>
       </section>
@@ -69,7 +69,7 @@ export default function LandingPage() {
       {/* CTA */}
       <section style={{ textAlign: 'center', marginBottom: '32px' }}>
         <a
-          href="https://chromewebstore.google.com/detail/PLACEHOLDER_EXTENSION_ID"
+          href="/signup"
           style={{
             display: 'inline-block',
             background: '#3b82f6',
@@ -81,10 +81,10 @@ export default function LandingPage() {
             textDecoration: 'none'
           }}
         >
-          Add to Chrome — Free
+          Get Started — Free
         </a>
         <p style={{ color: '#9ca3af', fontSize: '13px', marginTop: '8px' }}>
-          Free ATS matching. {PRICE} one-time for PDF download.
+          Free ATS matching. $2.99/month for unlimited PDF downloads.
         </p>
         <p style={{ color: '#9ca3af', fontSize: '12px', marginTop: '4px' }}>
           🌍 Available worldwide — pay in your local currency.
@@ -132,7 +132,7 @@ export default function LandingPage() {
             </tr>
             <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
               <td style={{ padding: '8px' }}>Tailored Resume PDF</td>
-              <td style={{ padding: '8px', textAlign: 'center' }}>✓ {PRICE} once</td>
+              <td style={{ padding: '8px', textAlign: 'center' }}>✓ $2.99/month</td>
               <td style={{ padding: '8px', textAlign: 'center' }}>✘</td>
               <td style={{ padding: '8px', textAlign: 'center' }}>✓</td>
             </tr>
@@ -150,7 +150,7 @@ export default function LandingPage() {
             </tr>
             <tr>
               <td style={{ padding: '8px' }}>Price</td>
-              <td style={{ padding: '8px', textAlign: 'center', fontWeight: '700', color: '#059669' }}>{PRICE} once</td>
+              <td style={{ padding: '8px', textAlign: 'center', fontWeight: '700', color: '#059669' }}>$2.99/month</td>
               <td style={{ padding: '8px', textAlign: 'center' }}>$50/mo</td>
               <td style={{ padding: '8px', textAlign: 'center' }}>$29/mo</td>
             </tr>

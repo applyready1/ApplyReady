@@ -7,7 +7,7 @@
  * Dependencies: constants.js (PRICE)
  */
 
-import { PRICE } from '../constants';
+import { PRICE_MONTHLY, SUBSCRIPTION_DURATION } from '../constants';
 
 export default function WelcomePage() {
   return (
@@ -48,13 +48,13 @@ export default function WelcomePage() {
 
       {/* Free vs Premium */}
       <div style={{ background: '#f9fafb', borderRadius: '12px', padding: '20px', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: '12px' }}>Free vs Premium</h2>
+        <h2 style={{ fontSize: '1.1rem', marginBottom: '12px' }}>Free vs Premium ({PRICE_MONTHLY})</h2>
         <table style={{ width: '100%', fontSize: '14px', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
               <th style={{ textAlign: 'left', padding: '6px' }}>Feature</th>
               <th style={{ padding: '6px' }}>Free</th>
-              <th style={{ padding: '6px' }}>{PRICE}</th>
+              <th style={{ padding: '6px' }}>Premium</th>
             </tr>
           </thead>
           <tbody>
@@ -73,13 +73,50 @@ export default function WelcomePage() {
               <td style={{ padding: '6px', textAlign: 'center' }}>✓ (preview)</td>
               <td style={{ padding: '6px', textAlign: 'center' }}>✓</td>
             </tr>
-            <tr>
+            <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
               <td style={{ padding: '6px' }}>Download Tailored PDF</td>
               <td style={{ padding: '6px', textAlign: 'center' }}>✘</td>
               <td style={{ padding: '6px', textAlign: 'center' }}>✓ Unlimited</td>
             </tr>
+            <tr>
+              <td style={{ padding: '6px' }}>License Duration</td>
+              <td style={{ padding: '6px', textAlign: 'center' }}>∞</td>
+              <td style={{ padding: '6px', textAlign: 'center', fontWeight: '600' }}>{SUBSCRIPTION_DURATION}</td>
+            </tr>
           </tbody>
         </table>
+        <p style={{ color: '#059669', fontSize: '12px', marginTop: '8px' }}>
+          💡 Premium licenses last {SUBSCRIPTION_DURATION} from activation. Renew anytime to continue using premium features.
+        </p>
+      </div>
+
+      {/* License Activation & Device Binding */}
+      <div style={{ background: '#f3f4f6', borderRadius: '12px', padding: '20px', marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '1.1rem', marginBottom: '12px' }}>🔐 How License Activation Works</h2>
+        <p style={{ color: '#4b5563', fontSize: '14px', marginBottom: '12px' }}>
+          When you enter your license key in the extension, it activates on your current device. Each license can only be used on one device at a time.
+        </p>
+        
+        <h3 style={{ fontSize: '0.95rem', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>First Time Setup</h3>
+        <p style={{ color: '#4b5563', fontSize: '14px', marginBottom: '12px' }}>
+          1. Open the ApplyReady extension<br/>
+          2. Click "Get ApplyReady" or enter your license key<br/>
+          3. Your license binds to this device<br/>
+          4. You're ready to download tailored PDFs
+        </p>
+
+        <h3 style={{ fontSize: '0.95rem', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>Switching to Another Device</h3>
+        <p style={{ color: '#4b5563', fontSize: '14px', marginBottom: '12px' }}>
+          1. Open ApplyReady on your current device<br/>
+          2. Click the "🔓 Deactivate License" button<br/>
+          3. Confirm the deactivation<br/>
+          4. Install the extension on your new device<br/>
+          5. Enter the same license key — it will activate on the new device
+        </p>
+
+        <p style={{ color: '#6366f1', fontSize: '13px', background: '#e0e7ff', padding: '10px', borderRadius: '6px' }}>
+          ℹ️ <strong>Why?</strong> This prevents license key sharing and ensures fair licensing. Each customer gets one active license at a time.
+        </p>
       </div>
 
       <div style={{ textAlign: 'center' }}>

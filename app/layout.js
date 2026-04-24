@@ -11,8 +11,8 @@ import './globals.css';
 
 export const metadata = {
   title: 'ApplyReady — Tailor Your Resume to Any Job in Seconds',
-  description: 'Free ATS keyword matching. One-click tailored resume PDF. Your data never leaves your browser. One-time purchase.',
-  keywords: 'resume, ATS, keyword matching, tailored resume, job application, Chrome extension',
+  description: 'Free ATS keyword matching. $2.99/month for unlimited tailored resume PDFs.',
+  keywords: 'resume, ATS, keyword matching, tailored resume, job application, web app',
   icons: { icon: '/favicon.ico' },
 };
 
