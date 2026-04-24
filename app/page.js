@@ -12,7 +12,14 @@ import { SUBSCRIPTION_DURATION } from './constants';
 
 export default function LandingPage() {
   return (
-    <main style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ fontFamily: 'system-ui, sans-serif' }}>
+      {/* Navigation Bar */}
+      <nav style={{ maxWidth: '800px', margin: '0 auto', padding: '20px', display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
+        <a href="/dashboard" style={{ padding: '8px 16px', color: '#4b5563', textDecoration: 'none', fontWeight: '500', borderRadius: '6px' }}>Log in</a>
+        <a href="/dashboard" style={{ padding: '8px 16px', background: '#3b82f6', color: 'white', textDecoration: 'none', fontWeight: '500', borderRadius: '6px' }}>Sign up</a>
+      </nav>
+
+      <main style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
       <h1 style={{ fontSize: '2.5rem', marginBottom: '8px' }}>
         📄 ApplyReady
       </h1>
@@ -168,6 +175,7 @@ export default function LandingPage() {
           <a href="/privacy" style={{ color: '#6b7280' }}>Privacy Policy</a>
         </p>
       </footer>
-    </main>
+      </main>
+    </div>
   );
 }

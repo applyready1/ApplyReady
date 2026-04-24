@@ -1,4 +1,4 @@
-﻿/**
+﻿﻿/**
  * welcome/page.js — Post-Install Welcome Page
  * 
  * Shown to users immediately after installing the extension.
@@ -7,7 +7,7 @@
  * Dependencies: constants.js (PRICE)
  */
 
-import { PRICE_MONTHLY, SUBSCRIPTION_DURATION } from '../constants';
+import { SUBSCRIPTION_DURATION } from '../constants';
 
 export default function WelcomePage() {
   return (
@@ -48,7 +48,7 @@ export default function WelcomePage() {
 
       {/* Free vs Premium */}
       <div style={{ background: '#f9fafb', borderRadius: '12px', padding: '20px', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: '12px' }}>Free vs Premium ({PRICE_MONTHLY})</h2>
+        <h2 style={{ fontSize: '1.1rem', marginBottom: '12px' }}>Free vs Premium ($2.99/month)</h2>
         <table style={{ width: '100%', fontSize: '14px', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
