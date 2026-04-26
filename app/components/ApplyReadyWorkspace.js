@@ -284,6 +284,7 @@ export default function ApplyReadyWorkspace() {
         <nav className="topnav" aria-label="Primary navigation">
           <a href="#workspace">Workspace</a>
           <a href="#editor">Resume</a>
+          <a href="/how-it-works">How it works</a>
           <a href="/privacy">Privacy</a>
         </nav>
       </header>
